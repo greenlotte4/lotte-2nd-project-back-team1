@@ -20,3 +20,7 @@ spring:
         format_sql: true
 
     show-sql: true
+
+jwt:
+    issuer: chhak0503@gmail.com
+    secret: Tz6W1F4Cl4Yl2GyyRjJ5C4v7KRMCA4z4
