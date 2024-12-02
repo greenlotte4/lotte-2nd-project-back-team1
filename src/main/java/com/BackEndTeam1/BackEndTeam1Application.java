@@ -1,13 +1,13 @@
-package com.lotte2backteam1;
+package com.BackEndTeam1;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class Lotte2ndProjectBackTeam1Application {
+public class BackEndTeam1Application {
 
     public static void main(String[] args) {
-        SpringApplication.run(Lotte2ndProjectBackTeam1Application.class, args);
+        SpringApplication.run(BackEndTeam1Application.class, args);
     }
 
 }

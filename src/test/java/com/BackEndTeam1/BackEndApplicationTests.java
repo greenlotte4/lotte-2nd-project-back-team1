@@ -1,10 +1,10 @@
-package com.lotte2backteam1;
+package com.BackEndTeam1;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class Lotte2ndProjectBackTeam1ApplicationTests {
+class BackEndApplicationTests {
 
     @Test
     void contextLoads() {

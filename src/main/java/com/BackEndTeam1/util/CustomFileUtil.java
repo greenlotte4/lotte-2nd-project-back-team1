@@ -1,4 +1,4 @@
-package com.lotte2backteam1.util;
+package com.BackEndTeam1.util;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;

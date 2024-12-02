@@ -1,7 +1,7 @@
-package com.wlsl.config;
+package com.BackEndTeam1.config;
 
-import com.lotte2backteam1.jwt.JwtAuthenticationFilter;
-import com.lotte2backteam1.jwt.JwtProvider;
+import com.BackEndTeam1.jwt.JwtAuthenticationFilter;
+import com.BackEndTeam1.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

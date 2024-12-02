@@ -7,7 +7,8 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/lottecommunity
+    url: jdbc:mysql://13.125.166.237:3306/lotteOn
+#    url: jdbc:mysql://127.0.0.1:3306/lotteOn
     username: root
     password: 1234
 
@@ -20,6 +21,9 @@ spring:
         format_sql: true
 
     show-sql: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
 
 jwt:
     issuer: chhak0503@gmail.com
