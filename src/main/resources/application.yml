@@ -7,8 +7,8 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://13.125.166.237:3306/lotteOn
-#    url: jdbc:mysql://127.0.0.1:3306/lotteOn
+#    url: jdbc:mysql://13.125.166.237:3306/hubflow
+    url: jdbc:mysql://127.0.0.1:3306/hubflow
     username: root
     password: 1234
 
