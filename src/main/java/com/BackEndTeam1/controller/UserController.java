@@ -78,11 +78,15 @@ public class UserController {
         }
     }
 
-    @GetMapping("/api/check-user-id/{userId}")
+    @GetMapping("/checkUserId/{userId}")
     public ResponseEntity<Map<String, Boolean>> checkUserId(@PathVariable String userId) {
+        log.info("중복확인 요청" + userId);
         boolean isAvailable = userService.isUserIdAvailable(userId);
         return ResponseEntity.ok(Map.of("isAvailable", isAvailable));
     }
+
+
+
 
     @GetMapping("/api/check-phone/{hp}")
     public ResponseEntity<Map<String, Boolean>> checkHp(@PathVariable String userId) {
