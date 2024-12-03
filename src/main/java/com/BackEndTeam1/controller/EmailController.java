@@ -4,6 +4,7 @@ import com.BackEndTeam1.service.EmailService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,6 +36,7 @@ public class EmailController {
 
         emailService.sendEmail(email, "회원가입 인증번호", "인증번호: " + authCode);
         log.info("인증번호 : " + authCode);
+
         return "인증번호가 이메일로 전송되었습니다.";
     }
 
@@ -48,6 +50,7 @@ public class EmailController {
 
         // 현재 저장된 인증번호 상태를 출력하여 확인
         log.info("현재 저장된 인증번호 맵 : " + emailAuthCodes);
+
 
         if (authCode.equals(emailAuthCodes.get(email))) {
             emailAuthCodes.remove(email); // 인증번호 사용 후 삭제
