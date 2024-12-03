@@ -20,7 +20,7 @@ public class RootConfig {
 
         // 수동 매핑 규칙 추가
         modelMapper.typeMap(UserDTO.class, User.class).addMappings(mapper ->
-                mapper.map(UserDTO::getPass, User::setPasswordHash)
+                mapper.map(UserDTO::getPass, User::setPass)
         );
 
         return modelMapper;
