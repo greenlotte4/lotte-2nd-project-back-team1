@@ -25,10 +25,10 @@ spring:
     multipart:
       max-file-size: 10MB
   mail:
-    host: spring.mail.host=smtp.gmail.com
+    host: smtp.gmail.com
     port: 587
-    username : NEEDCHANGE
-    password : NEEDCHANGE
+    username : subinasa231@gmail.com
+    password : yrsooezvdnidjttx
     protocol : smtp
     properties:
       mail:
