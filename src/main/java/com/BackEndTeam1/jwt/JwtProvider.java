@@ -44,6 +44,7 @@ public class JwtProvider {
                 .issuer(issuer)
                 .issuedAt(issuedDate)
                 .expiration(expireDate)
+                .claim("uid", user.getUserId())
                 .claim("username", user.getUsername())
                 .claim("role", user.getRole())
                 .signWith(this.secretKey, Jwts.SIG.HS256)
@@ -68,10 +69,11 @@ public class JwtProvider {
         Claims claims = getClaims(token);
         String username = claims.get("username", String.class);
         String role = claims.get("role", String.class);
-        
+        String userId = claims.get("uid", String.class);
         // User 엔티티 생성
         User user = User
                     .builder()
+                    .userId(userId)
                     .username(username)
                     .role(role)
                     .build();
