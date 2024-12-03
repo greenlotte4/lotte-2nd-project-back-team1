@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 
 @Getter
@@ -31,4 +32,8 @@ public class Board {
 
     @Column(name = "updated_at")
     private Timestamp updatedAt;
+
+    @Column(name = "boardName")
+    private String boardName;
+
 }
