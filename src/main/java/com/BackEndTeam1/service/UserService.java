@@ -44,7 +44,9 @@ public class UserService {
 
 
     public boolean isUserIdAvailable(String userId) {
-        return userRepository.findByUserId(userId).isPresent();
+        Optional<User> existingUser = userRepository.findByUserId(userId);
+        log.info("Found user: " + existingUser.isPresent()); // 로그 추가
+        return !existingUser.isPresent();
     }
 
     public boolean isPhoneNumberExists(String phoneNumber) {
