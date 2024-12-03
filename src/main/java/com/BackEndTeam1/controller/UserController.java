@@ -63,8 +63,10 @@ public class UserController {
 
             // 토큰 전송
             Map<String, Object> resultMap = new HashMap<>();
-            resultMap.put("username", user.getUserId());
+            resultMap.put("username", user.getUsername());
+            resultMap.put("userid", user.getUserId());
             resultMap.put("role", user.getRole());
+            resultMap.put("email", user.getEmail());
             resultMap.put("accessToken", accessToken);
             resultMap.put("refreshToken", refreshToken);
 
