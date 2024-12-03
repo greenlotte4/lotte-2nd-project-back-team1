@@ -26,34 +26,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse resp, FilterChain filterChain) throws ServletException, IOException {
 
+        // 이미 인증된 요청인 경우, 추가적인 인증 처리를 하지 않음
+        if (SecurityContextHolder.getContext().getAuthentication() != null) {
+            filterChain.doFilter(req, resp);
+            return;
+        }
+
         String header = req.getHeader(AUTH_HEADER);
-        log.info("여기1" + header);
+        log.info("여기1: " + header);
 
         String token = null;
-        if(header != null && header.startsWith(TOKEN_PREFIX)) {
+        if (header != null && header.startsWith(TOKEN_PREFIX)) {
             token = header.substring(TOKEN_PREFIX.length()).trim();
         }
-        log.info("여기2"+token);
+        log.info("여기2: " + token);
 
         // 토큰 검사
-        if(token != null) {
-
+        if (token != null) {
             try {
                 jwtProvider.validateToken(token);
 
                 Authentication authentication = jwtProvider.getAuthentication(token);
+
+                // 인증 객체 설정
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
-
             } catch (Exception e) {
-                // 토큰이 이상이 있으면 실패 응답
                 resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 resp.getWriter().write(e.getMessage());
-                log.info("here5 - " + e.getMessage());
-                return; // 처리종료
+                log.info("여기4 - " + e.getMessage());
+                return; // 처리 종료
             }
         }
 
-        filterChain.doFilter(req, resp);
+        filterChain.doFilter(req, resp);  // 필터 체인 계속 실행
     }
 }
