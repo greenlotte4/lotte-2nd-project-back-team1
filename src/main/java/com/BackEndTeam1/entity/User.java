@@ -24,12 +24,12 @@ public class User {
 
     private String email;
 
-    @Column(name = "password_hash")
-    private String passwordHash;
+    @Column(name = "pass")
+    private String pass;
 
     @ManyToOne
     @JoinColumn(name = "plan_id")
-    private Plan plan;
+    private Plan plan; // 유료/ 종류
 
     @Builder.Default
     private String role = "USER";
@@ -45,9 +45,9 @@ public class User {
     private String status;
 
     @Column(name = "created_at")
-    private Timestamp createdAt;
+    private Timestamp createdAt; // 생성일
 
     @Column(name = "updated_at")
-    private Timestamp updatedAt;
+    private Timestamp updatedAt; // 로그인 날
 
 }

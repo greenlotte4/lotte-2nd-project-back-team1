@@ -23,7 +23,7 @@ public class UserService {
     public UserDTO saveUser(UserDTO userDTO){
         User user = modelMapper.map(userDTO, User.class);
         //패스워드 암호화 할때 config(RootConfig)에 직접 매핑해줘야함
-        user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
+        user.setPass(passwordEncoder.encode(user.getPass()));
         User savedUser = userRepository.save(user);
         return modelMapper.map(savedUser, UserDTO.class);
     }
@@ -44,7 +44,9 @@ public class UserService {
 
 
     public boolean isUserIdAvailable(String userId) {
-        return userRepository.findByUserId(userId).isPresent();
+        Optional<User> existingUser = userRepository.findByUserId(userId);
+        log.info("Found user: " + existingUser.isPresent()); // 로그 추가
+        return !existingUser.isPresent();
     }
 
     public boolean isPhoneNumberExists(String phoneNumber) {
