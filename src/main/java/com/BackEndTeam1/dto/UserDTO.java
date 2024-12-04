@@ -3,6 +3,7 @@ package com.BackEndTeam1.dto;
 import com.BackEndTeam1.entity.Plan;
 import lombok.*;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 @Getter
@@ -16,13 +17,13 @@ public class UserDTO {
     private String pass;
     private String username;
     private String email;
-    private Plan plan_id;
+    private Plan plan;
     private String role;
     private String hp;
     private String addr1;
     private String addr2;
     private String zipcode;
     private String status;
-    private LocalDateTime created_at;
-    private LocalDateTime updated_at;
+    private Timestamp createdAt;
+    private Timestamp updatedAt;
 }
