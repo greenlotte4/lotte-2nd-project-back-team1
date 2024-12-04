@@ -36,4 +36,7 @@ public class Board {
     @Column(name = "boardName")
     private String boardName;
 
+    @Column(nullable = false)  // 기본값을 설정할 수도 있습니다.
+    private Boolean isFavorite;  // boolean → Boolean으로 변경
+
 }
