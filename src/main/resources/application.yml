@@ -9,7 +9,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://13.125.166.237:3306/hubflow
     username: root
-    password: Lotteonteam1!
+    password: "Lotteonteam1!"
 
 
   #    url: jdbc:mysql://127.0.0.1:3306/hubflow
@@ -17,14 +17,17 @@ spring:
   #    password: 1234
 
   jpa:
+    database: mysql
     hibernate:
       ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
 
     properties:
       hibernate:
         format_sql: true
+        show-sql: true
 
-    show-sql: true
   servlet:
     multipart:
       max-file-size: 10MB
@@ -42,6 +45,23 @@ spring:
           starttls.enable: true
     default-encoding: UTF-8
 
+  web:
+    resources:
+      static-locations:
+        - classpath:/static/
+  data:
+    redis:
+      lettuce:
+        pool:
+          max-active: 5
+          max-idle: 5
+          min-idle: 5
+      host: 13.125.166.237
+      port: 6379
+
+    mongodb:
+      uri: mongodb://hubflow:hubflow123@13.125.166.237:27017/hubflow?authSource=hubflow
+
 
 jwt:
     issuer: chhak0503@gmail.com
@@ -49,3 +69,4 @@ jwt:
 file:
   upload:
     path: upload
+

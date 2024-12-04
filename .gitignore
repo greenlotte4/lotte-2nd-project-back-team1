@@ -38,3 +38,11 @@ out/
 
 ### yml ###
 application-dev.yml
+
+
+## 폴더 무시
+test/
+
+
+## generated 폴더 무시 ##
+/src/main/generated/
