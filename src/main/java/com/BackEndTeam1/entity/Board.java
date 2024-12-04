@@ -33,10 +33,7 @@ public class Board {
     @Column(name = "updated_at")
     private Timestamp updatedAt;
 
-    @Column(name = "boardName")
+    @Column(name = "board_Name")
     private String boardName;
-
-    @Column(nullable = false)  // 기본값을 설정할 수도 있습니다.
-    private Boolean isFavorite;  // boolean → Boolean으로 변경
 
 }
