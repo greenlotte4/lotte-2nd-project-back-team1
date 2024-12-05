@@ -58,6 +58,10 @@ public class UserService {
         return modelMapper.map(user.get(), UserDTO.class);
     }
 
+    public  String findUserIdByEmail(String email) {
+        User user = userRepository.findByEmail(email);
+        return user != null ? user.getUserId() : null;
+    }
 
     public boolean isUserIdAvailable(String userId) {
         Optional<User> existingUser = userRepository.findByUserId(userId);
