@@ -1,7 +1,10 @@
 package com.BackEndTeam1.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -12,6 +15,8 @@ import org.hibernate.annotations.OnDeleteAction;
 @AllArgsConstructor
 @Entity
 @Table(name = "FavoriteBoard")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@DynamicInsert
 public class FavoriteBoard {
 
     @Id
@@ -22,6 +27,7 @@ public class FavoriteBoard {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
+    @JsonIgnore // User 객체 직렬화에서 제외
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -29,6 +35,6 @@ public class FavoriteBoard {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Board board;
 
-    @Column(name = "is_favorite", nullable = false)
+    @Column(name = "is_favorite", nullable = false, columnDefinition = "boolean default true")
     private Boolean isFavorite;
 }

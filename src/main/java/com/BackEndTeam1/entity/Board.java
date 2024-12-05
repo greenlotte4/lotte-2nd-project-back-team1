@@ -42,11 +42,11 @@ public class Board {
     private Boolean isFavorite;
 
     @JsonCreator
-    public Board(@JsonProperty("boardId") Integer boardId,
-                 @JsonProperty("isFavorite") Boolean isFavorite) {
+    public Board(@JsonProperty("boardId") Integer boardId) {
         this.boardId = boardId;
-        this.isFavorite = isFavorite;
     }
+
+
 
 
 }

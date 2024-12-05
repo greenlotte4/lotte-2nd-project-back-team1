@@ -13,5 +13,6 @@ import java.util.Optional;
 public interface FavoriteBoardRepository extends JpaRepository<FavoriteBoard, Integer> {
 
     Optional<FavoriteBoard> findByUserAndBoard(User user, Board board);
+    List<FavoriteBoard> findByUser_UserId(String userId);
 
 }
