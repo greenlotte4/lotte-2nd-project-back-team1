@@ -18,7 +18,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Timestamp;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Log4j2
@@ -92,6 +94,14 @@ public class UserController {
         log.info("중복확인 요청" + userId);
         boolean isAvailable = userService.isUserIdAvailable(userId);
         return ResponseEntity.ok(Map.of("isAvailable", isAvailable));
+    }
+
+    @GetMapping("/list")
+    @ResponseBody
+    public List<UserDTO> getUserList() {
+        List<UserDTO> users = userService.findAll();
+        log.info(users.toString());
+        return users;
     }
 
 

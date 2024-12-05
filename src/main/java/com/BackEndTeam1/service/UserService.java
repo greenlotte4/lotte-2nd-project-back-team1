@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -197,5 +198,16 @@ public class UserService {
             user.setPlan(plan);
             userRepository.save(user);
         }
+    }
+
+    //페이징 없이 출력
+    public List<UserDTO> findAll() {
+        List<User> userList = userRepository.findAll();
+        List<UserDTO> userDTOList = new ArrayList<>();
+        for (User user : userList) {
+            userDTOList.add(modelMapper.map(user, UserDTO.class));
+
+        }
+        return userDTOList;
     }
 }
