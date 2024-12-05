@@ -52,4 +52,8 @@ public class UserService {
     public boolean isPhoneNumberExists(String phoneNumber) {
         return userRepository.existsByHp(phoneNumber);
     }
+
+    public boolean isEmailExists(String email) {
+        return userRepository.existsByEmail(email);
+    }
 }
