@@ -1,5 +1,7 @@
 package com.BackEndTeam1.entity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -35,5 +37,16 @@ public class Board {
 
     @Column(name = "board_Name")
     private String boardName;
+
+    @Transient // DB와 연관이 없음을 명시
+    private Boolean isFavorite;
+
+    @JsonCreator
+    public Board(@JsonProperty("boardId") Integer boardId,
+                 @JsonProperty("isFavorite") Boolean isFavorite) {
+        this.boardId = boardId;
+        this.isFavorite = isFavorite;
+    }
+
 
 }
