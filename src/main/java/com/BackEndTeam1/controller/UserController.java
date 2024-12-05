@@ -1,9 +1,11 @@
 package com.BackEndTeam1.controller;
 
 import com.BackEndTeam1.dto.UserDTO;
+import com.BackEndTeam1.entity.Plan;
 import com.BackEndTeam1.entity.User;
 import com.BackEndTeam1.jwt.JwtProvider;
 import com.BackEndTeam1.security.MyUserDetails;
+import com.BackEndTeam1.service.PlanHistoryService;
 import com.BackEndTeam1.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -29,13 +31,16 @@ public class UserController {
     private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
 
-
     // 회원가입
     @PostMapping("/register")
     public ResponseEntity register(@RequestBody UserDTO userDTO) {
         log.info("화원가입 요청");
+        Plan plan = new Plan();
+        plan.setPlanId(1L);
+        userDTO.setPlan(plan);
         userDTO.setCreatedAt(new Timestamp(System.currentTimeMillis()));
         UserDTO savedUser = userService.saveUser(userDTO);
+
         return ResponseEntity.status(HttpStatus.OK).body(savedUser);
     }
 
