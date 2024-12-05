@@ -107,5 +107,19 @@ public class UserController {
     }
 
 
+    @PostMapping("/findEmail")
+    public ResponseEntity<Map<String, String>> findEmail(@RequestBody Map<String, String> requestBody) {
+        log.info("아이디 찾기 요청 : " + requestBody);
+        String email = requestBody.get("email");
 
+        String userId = userService.findUserIdByEmail(email);
+        log.info("유저아이디 : " + userId);
+        // 아이디를 찾았다면
+        if (userId != null) {
+            return ResponseEntity.ok(Map.of("userId", userId));  // 아이디 반환
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "해당 이메일로 등록된 아이디가 없습니다."));  // 아이디를 찾지 못했을 경우}
+        }
+    }
 }
