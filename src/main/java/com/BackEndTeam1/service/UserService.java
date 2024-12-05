@@ -69,8 +69,6 @@ public class UserService {
         return userRepository.existsByHp(phoneNumber);
     }
 
-
-
     public User getLoggedInUser() {
         // Spring Security에서 현재 인증된 사용자 가져오기
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -82,6 +80,7 @@ public class UserService {
         String username = authentication.getName(); // 인증된 유저의 username(email, id 등)
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+    }
 
     public void updateLastLoginTime(String userId) {
         Optional<User> userOptional = userRepository.findById(userId);

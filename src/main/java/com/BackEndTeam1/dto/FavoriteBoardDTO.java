@@ -1,5 +1,7 @@
 package com.BackEndTeam1.dto;
 
+import com.BackEndTeam1.entity.Board;
+import com.BackEndTeam1.entity.User;
 import lombok.*;
 
 @Getter
@@ -10,6 +12,7 @@ import lombok.*;
 @Builder
 public class FavoriteBoardDTO {
 
-    private Long boardId;
+    private Board boardId;
+    private User userId;
     private boolean isFavorite;
 }
