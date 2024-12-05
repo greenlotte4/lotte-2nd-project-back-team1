@@ -26,4 +26,6 @@ public class UserDTO {
     private String status;
     private Timestamp createdAt;
     private Timestamp updatedAt;
+
+    private PlanHistoryDTO planHistory;
 }
