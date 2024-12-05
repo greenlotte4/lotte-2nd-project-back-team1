@@ -24,7 +24,6 @@ public class PageResponseDTO<T> {
     private String type;
     private String keyword;
 
-
     @Builder
     public PageResponseDTO(PageRequestDTO pageRequestDTO, List<T> dtoList, int total) {
         this.cate = pageRequestDTO.getCate();

@@ -15,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,6 +34,7 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity register(@RequestBody UserDTO userDTO) {
         log.info("화원가입 요청");
+        userDTO.setCreatedAt(new Timestamp(System.currentTimeMillis()));
         UserDTO savedUser = userService.saveUser(userDTO);
         return ResponseEntity.status(HttpStatus.OK).body(savedUser);
     }
@@ -53,7 +55,7 @@ public class UserController {
             MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
             User user = userDetails.getUser();
             log.info("user : " + user);
-
+            userService.updateLastLoginTime(user.getUserId());
             // JWT 토큰 발행
             String accessToken = jwtProvider.createToken(user, 1);
             String refreshToken = jwtProvider.createToken(user, 7);
