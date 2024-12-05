@@ -69,6 +69,9 @@ public class UserService {
         return userRepository.existsByHp(phoneNumber);
     }
 
+    public boolean isEmailExists(String email) {
+        return userRepository.existsByEmail(email);
+    }
     public User getLoggedInUser() {
         // Spring Security에서 현재 인증된 사용자 가져오기
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

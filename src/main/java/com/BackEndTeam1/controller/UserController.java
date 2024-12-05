@@ -92,9 +92,17 @@ public class UserController {
 
 
 
-    @GetMapping("/api/check-phone/{hp}")
-    public ResponseEntity<Map<String, Boolean>> checkHp(@PathVariable String userId) {
-        boolean isAvailable = userService.isUserIdAvailable(userId);
+    @PostMapping("/hpcheck")
+    public ResponseEntity<Map<String, Boolean>> checkHp(@RequestBody Map<String, String> requestBody) {
+        log.info("휴대폰 중복검사 요청 : " + requestBody);
+
+        // 요청 본문에서 phoneNumber를 추출
+        String phoneNumber = requestBody.get("phoneNumber");
+
+        // 전화번호 중복 여부를 서비스에서 확인
+        boolean isAvailable = userService.isPhoneNumberExists(phoneNumber);
+
+        // 결과 반환
         return ResponseEntity.ok(Map.of("isAvailable", isAvailable));
     }
 

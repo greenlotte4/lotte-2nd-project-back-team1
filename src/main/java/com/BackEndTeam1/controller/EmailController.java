@@ -1,6 +1,7 @@
 package com.BackEndTeam1.controller;
 
 import com.BackEndTeam1.service.EmailService;
+import com.BackEndTeam1.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +19,11 @@ import java.util.Random;
 public class EmailController {
     private final EmailService emailService;
     private final Map<String, String> emailAuthCodes = new HashMap<>();
+    private final UserService userService;
 
-    public EmailController(EmailService emailService) {
+    public EmailController(EmailService emailService, UserService userService) {
         this.emailService = emailService;
+        this.userService = userService;
     }
 
     @PostMapping("/api/send")
@@ -61,7 +64,15 @@ public class EmailController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("인증 실패");
         }
     }
+    @PostMapping("/api/checkEmail")
+    public ResponseEntity<Map<String, Boolean>> checkEmail(@RequestBody Map<String, String> request) {
+        log.info("이메일 중복확인 요청");
+        String email = request.get("email");
 
+        // 이메일이 존재하면 false, 존재하지 않으면 true로 반환
+        boolean isAvailable = !userService.isEmailExists(email);
+        return  ResponseEntity.ok(Map.of("isAvailable",isAvailable));
+    }
     private String generateAuthCode() {
         Random random = new Random();
         int code = 100000 + random.nextInt(900000); // 6자리 숫자 생성
