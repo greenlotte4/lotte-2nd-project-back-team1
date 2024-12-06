@@ -9,6 +9,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 @RequiredArgsConstructor
@@ -31,5 +33,19 @@ public class BoardArticleService {
 
         return Math.toIntExact(savedBoardArticle.getId());
 
+    }
+
+    public List<BoardArticleDTO> getAllBoardArticles() {
+        return boardArticleRepository.findAll().stream()
+                .map(article -> new BoardArticleDTO(
+                        article.getId(),
+                        article.getTitle(),
+                        article.getContent(),
+                        article.getBoard() != null ? article.getBoard().getBoardName() : "Unknown", // 게시판 이름
+                        article.getCreated_At() != null ? article.getCreated_At().toString() : "Unknown", // 작성일
+                        article.getUpdated_At() != null ? article.getUpdated_At().toString() : "Unknown", // 수정일
+                        article.getAuthor() != null ? article.getAuthor().getUsername() : "Unknown" // 작성자 이름
+                ))
+                .collect(Collectors.toList());
     }
 }

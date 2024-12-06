@@ -18,4 +18,16 @@ public class BoardArticleDTO {
     private String boardName;
     private String created_At;
     private String updated_At;
+    private String userName;
+
+    public BoardArticleDTO(Long id, String title, String content, String boardName, String created_At, String updated_At, String userName) {
+        this.id = Math.toIntExact(id);
+        this.title = title;
+        this.content = content;
+        this.boardName = boardName;
+        this.created_At = created_At;
+        this.updated_At = updated_At;
+        this.userName = userName;
+
+    }
 }
