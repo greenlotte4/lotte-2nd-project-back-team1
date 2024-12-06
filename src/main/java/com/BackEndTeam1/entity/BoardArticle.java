@@ -40,4 +40,12 @@ public class BoardArticle {
     @ManyToOne
     @JoinColumn(name = "board_id")
     private Board board;
+
+    @Column(nullable = false, length = 20)
+    private String status = "active"; // "active", "trash", "deleted"
+
+    @Column(name = "trash_date" , nullable = true)
+    private LocalDateTime trashDate; // 휴지통 이동 날짜
+
+
 }

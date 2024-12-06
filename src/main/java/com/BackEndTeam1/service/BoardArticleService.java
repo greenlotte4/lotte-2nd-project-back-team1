@@ -5,6 +5,7 @@ import com.BackEndTeam1.entity.BoardArticle;
 import com.BackEndTeam1.entity.User;
 import com.BackEndTeam1.repository.BoardArticleRepository;
 import com.BackEndTeam1.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
@@ -53,8 +54,20 @@ public class BoardArticleService {
                         article.getCreatedAt() != null ? article.getCreatedAt().toString() : "Unknown", // 작성일
                         article.getUpdatedAt() != null ? article.getUpdatedAt().toString() : "Unknown", // 수정일
                         article.getAuthor() != null ? article.getAuthor().getUsername() : "Unknown",// 작성자 이름
-                        article.getAuthor() != null ? article.getAuthor().getUserId() : "Unknown"
+                        article.getAuthor() != null ? article.getAuthor().getUserId() : "Unknown",
+                        String.valueOf(article.getTrashDate() != null ? article.getTrashDate() : "Unknown")
                 ))
                 .collect(Collectors.toList());
     }
+
+    @Transactional
+    public void deleteArticles(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            throw new IllegalArgumentException("삭제할 게시글 ID가 없습니다.");
+        }
+        // 휴지통에 있는 해당 ID들의 게시글 삭제
+        boardArticleRepository.deleteAllByIdIn(ids);
+    }
+
+
 }

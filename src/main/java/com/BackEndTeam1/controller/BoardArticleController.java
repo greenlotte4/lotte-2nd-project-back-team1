@@ -4,7 +4,6 @@ import com.BackEndTeam1.dto.BoardArticleDTO;
 import com.BackEndTeam1.entity.BoardArticle;
 import com.BackEndTeam1.repository.BoardArticleRepository;
 import com.BackEndTeam1.service.BoardArticleService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
@@ -14,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -74,4 +75,61 @@ public class BoardArticleController {
         return ResponseEntity.ok(articleDTO);
     }
 
+    @DeleteMapping("/delete")
+    public ResponseEntity<String> deleteArticle(@RequestParam Long id) {
+        try {
+            Optional<BoardArticle> articleOptional = boardArticleRepository.findById(Math.toIntExact(id));
+            if (!articleOptional.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("게시글을 찾을 수 없습니다.");
+            }
+
+            BoardArticle article = articleOptional.get();
+            article.setStatus("trash");
+            article.setTrashDate(LocalDateTime.now());
+            boardArticleRepository.save(article);
+
+            return ResponseEntity.ok("게시글이 휴지통으로 이동되었습니다.");
+        } catch (Exception e) {
+            log.error("게시글 삭제 중 오류 발생: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("게시글 삭제에 실패했습니다.");
+        }
+    }
+
+    @GetMapping("/trash")
+    public ResponseEntity<List<BoardArticleDTO>> getTrashArticles() {
+        try {
+            List<BoardArticle> trashArticles = boardArticleRepository.findByStatus("trash");
+
+            // 엔티티를 DTO로 변환
+            List<BoardArticleDTO> trashDTOs = trashArticles.stream()
+                    .map(article -> modelMapper.map(article, BoardArticleDTO.class))
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(trashDTOs);
+        } catch (Exception e) {
+            log.error("휴지통 조회 중 오류 발생: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    @DeleteMapping("/trash/permanent")
+    public ResponseEntity<?> deleteTrashArticles(@RequestParam("ids") String ids) {
+        System.out.println("Received ids: " + ids); // 요청 로그 확인
+
+        if (ids == null || ids.isEmpty()) {
+            return ResponseEntity.badRequest().body("삭제할 게시글 ID가 없습니다.");
+        }
+
+        List<Long> idList = Arrays.stream(ids.split(","))
+                .map(Long::parseLong)
+                .collect(Collectors.toList());
+
+        try {
+            boardArticleService.deleteArticles(idList);
+            return ResponseEntity.ok("선택한 게시글이 영구 삭제되었습니다.");
+        } catch (Exception e) {
+            e.printStackTrace(); // 에러 로그 출력
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("게시글 삭제에 실패했습니다.");
+        }
+    }
 }
