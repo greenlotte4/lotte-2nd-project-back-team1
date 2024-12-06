@@ -1,6 +1,7 @@
 package com.BackEndTeam1.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,13 +28,14 @@ public class BoardArticle {
 
     @ManyToOne(fetch = FetchType.LAZY) // 작성자와의 관계 설정
     @JoinColumn(name = "user_id") // 외래 키(user_id)를 매핑
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User author;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime created_At; // 글 작성 시간
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt; // 글 작성 시간
 
-    @Column(nullable = false)
-    private LocalDateTime updated_At; // 글 수정 시간
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt; // 글 수정 시간
 
     @ManyToOne
     @JoinColumn(name = "board_id")
