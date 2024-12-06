@@ -185,8 +185,8 @@ public class UserService {
             log.info("role :" + role);
             String status = (String) update.get("status");
             log.info("status :" + status);
-            Map<String, Object> planIdMap = (Map<String, Object>) update.get("planId");
-            Long planId = ((Number) planIdMap.get("planId")).longValue();
+            Object planIdObj = update.get("planId");
+            Long planId = planIdObj instanceof Number ? ((Number) planIdObj).longValue() : null;
             log.info("planId :" + planId);
 
             User user = userRepository.findById(userId)
