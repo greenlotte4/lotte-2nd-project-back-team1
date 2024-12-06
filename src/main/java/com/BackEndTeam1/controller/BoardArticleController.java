@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Log4j2
 @RequiredArgsConstructor
 @RestController
@@ -33,5 +35,9 @@ public class BoardArticleController {
         }
     }
 
+    @GetMapping("/view")
+    public List<BoardArticleDTO> getAllBoardArticle() {
+        return boardArticleService.getAllBoardArticles();
+    }
 
 }
