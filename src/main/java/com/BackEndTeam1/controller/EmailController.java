@@ -78,4 +78,22 @@ public class EmailController {
         int code = 100000 + random.nextInt(900000); // 6자리 숫자 생성
         return String.valueOf(code);
     }
+    @PostMapping("/api/findPassEmail")
+    public String sendEmailPasAuth(@RequestBody Map<String, String> request) {
+        log.info("요청왔다");
+        log.info("이메일,아이디 : " + request);
+
+        String email = request.get("email");
+        String authCode = generateAuthCode();
+
+        emailAuthCodes.put(email, authCode); // 인증번호 저장
+        log.info("저장된 인증번호 : " + emailAuthCodes); // 저장된 인증번호 확인
+
+        emailService.sendEmail(email, "회원가입 인증번호", "인증번호: " + authCode);
+        log.info("인증번호 : " + authCode);
+
+        return "인증번호가 이메일로 전송되었습니다.";
+    }
+
+
 }

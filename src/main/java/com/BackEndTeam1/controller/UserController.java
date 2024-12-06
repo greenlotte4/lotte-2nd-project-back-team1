@@ -137,4 +137,6 @@ public class UserController {
                     .body(Map.of("message", "해당 이메일로 등록된 아이디가 없습니다."));  // 아이디를 찾지 못했을 경우}
         }
     }
+
+
 }
