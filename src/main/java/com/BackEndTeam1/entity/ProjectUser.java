@@ -18,9 +18,9 @@ public class ProjectUser {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "project_user_id")
-    private Integer projectUserId;
+    private Long projectUserId;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "project_id")
     private Project project;
 
