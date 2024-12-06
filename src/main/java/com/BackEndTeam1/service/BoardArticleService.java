@@ -4,7 +4,9 @@ import com.BackEndTeam1.dto.BoardArticleDTO;
 import com.BackEndTeam1.entity.BoardArticle;
 import com.BackEndTeam1.entity.User;
 import com.BackEndTeam1.repository.BoardArticleRepository;
+import com.BackEndTeam1.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
@@ -12,27 +14,33 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
+@Log4j2
 @RequiredArgsConstructor
 @Service
 public class BoardArticleService {
 
     private final ModelMapper modelMapper;
     private final BoardArticleRepository boardArticleRepository;
+    private final UserRepository userRepository;
 
     public int save(BoardArticleDTO boardArticleDTO) {
+        log.info("Saving BoardArticle: {}", boardArticleDTO);
+
+        if (boardArticleDTO.getUserId() == null) {
+            throw new IllegalArgumentException("userId가 null입니다.");
+        }
+
+        User user = userRepository.findByUserId(String.valueOf(boardArticleDTO.getUserId()))
+                .orElseThrow(() -> new IllegalArgumentException("해당 ID의 사용자가 존재하지 않습니다."));
 
         BoardArticle boardArticle = modelMapper.map(boardArticleDTO, BoardArticle.class);
-
-        boardArticle.setCreated_At(LocalDateTime.now());
-        boardArticle.setUpdated_At(LocalDateTime.now());
-
+        boardArticle.setAuthor(user);
+        boardArticle.setCreatedAt(LocalDateTime.now());
+        boardArticle.setUpdatedAt(LocalDateTime.now());
 
         BoardArticle savedBoardArticle = boardArticleRepository.save(boardArticle);
 
-
         return Math.toIntExact(savedBoardArticle.getId());
-
     }
 
     public List<BoardArticleDTO> getAllBoardArticles() {
@@ -42,9 +50,10 @@ public class BoardArticleService {
                         article.getTitle(),
                         article.getContent(),
                         article.getBoard() != null ? article.getBoard().getBoardName() : "Unknown", // 게시판 이름
-                        article.getCreated_At() != null ? article.getCreated_At().toString() : "Unknown", // 작성일
-                        article.getUpdated_At() != null ? article.getUpdated_At().toString() : "Unknown", // 수정일
-                        article.getAuthor() != null ? article.getAuthor().getUsername() : "Unknown" // 작성자 이름
+                        article.getCreatedAt() != null ? article.getCreatedAt().toString() : "Unknown", // 작성일
+                        article.getUpdatedAt() != null ? article.getUpdatedAt().toString() : "Unknown", // 수정일
+                        article.getAuthor() != null ? article.getAuthor().getUsername() : "Unknown",// 작성자 이름
+                        article.getAuthor() != null ? article.getAuthor().getUserId() : "Unknown"
                 ))
                 .collect(Collectors.toList());
     }

@@ -16,18 +16,20 @@ public class BoardArticleDTO {
     private String title;
     private String content;
     private String boardName;
-    private String created_At;
-    private String updated_At;
+    private String createdAt;
+    private String updatedAt;
     private String userName;
+    private String userId; // 작성자 ID 추가
 
-    public BoardArticleDTO(Long id, String title, String content, String boardName, String created_At, String updated_At, String userName) {
+    public BoardArticleDTO(Long id, String title, String content, String boardName, String createdAt, String updatedAt, String userName, String userId) {
         this.id = Math.toIntExact(id);
         this.title = title;
         this.content = content;
         this.boardName = boardName;
-        this.created_At = created_At;
-        this.updated_At = updated_At;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
         this.userName = userName;
+        this.userId = userId;
 
     }
 }
