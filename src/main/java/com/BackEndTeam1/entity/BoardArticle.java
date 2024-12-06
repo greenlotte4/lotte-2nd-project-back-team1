@@ -25,13 +25,17 @@ public class BoardArticle {
     @Lob
     private String content; // 글 본문
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User author; // 작성자 정보
+    @ManyToOne(fetch = FetchType.LAZY) // 작성자와의 관계 설정
+    @JoinColumn(name = "user_id") // 외래 키(user_id)를 매핑
+    private User author;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime created_At; // 글 작성 시간
 
     @Column(nullable = false)
     private LocalDateTime updated_At; // 글 수정 시간
+
+    @ManyToOne
+    @JoinColumn(name = "board_id")
+    private Board board;
 }
