@@ -1,5 +1,6 @@
 package com.BackEndTeam1.repository;
 
+import com.BackEndTeam1.entity.Board;
 import com.BackEndTeam1.entity.BoardArticle;
 import io.lettuce.core.dynamic.annotation.Param;
 import jakarta.transaction.Transactional;
@@ -23,5 +24,9 @@ public interface BoardArticleRepository extends JpaRepository<BoardArticle, Inte
     void deleteAllByIdIn(List<Long> ids);
 
     List<BoardArticle> findByStatusAndTrashDateBefore(String status, LocalDateTime dateTime);
+
+    List<BoardArticle> findByBoard(Board board);
+
+    List<BoardArticle> findByBoard_BoardId(Long boardId);
 
 }
