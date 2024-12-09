@@ -18,10 +18,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Timestamp;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -100,8 +97,9 @@ public class UserController {
     @ResponseBody
     public List<UserDTO> getUserList() {
         List<UserDTO> users = userService.findAll();
-        log.info(users.toString());
+//        log.info(users.toString());
         return users;
+//        return new ArrayList<>();
     }
 
 
