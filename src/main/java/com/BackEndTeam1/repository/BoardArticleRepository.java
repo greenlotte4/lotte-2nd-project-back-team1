@@ -22,4 +22,6 @@ public interface BoardArticleRepository extends JpaRepository<BoardArticle, Inte
 
     void deleteAllByIdIn(List<Long> ids);
 
+    List<BoardArticle> findByStatusAndTrashDateBefore(String status, LocalDateTime dateTime);
+
 }
