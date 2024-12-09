@@ -2,8 +2,11 @@ package com.BackEndTeam1.controller;
 
 import com.BackEndTeam1.dto.BoardArticleDTO;
 import com.BackEndTeam1.entity.BoardArticle;
+import com.BackEndTeam1.entity.User;
 import com.BackEndTeam1.repository.BoardArticleRepository;
+import com.BackEndTeam1.repository.UserRepository;
 import com.BackEndTeam1.service.BoardArticleService;
+import com.BackEndTeam1.service.BoardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
@@ -14,9 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Log4j2
@@ -28,6 +29,8 @@ public class BoardArticleController {
     private final BoardArticleService boardArticleService;
     private final ModelMapper modelMapper;
     private final BoardArticleRepository boardArticleRepository;
+    private final UserRepository userRepository;
+    private final BoardService boardService;
 
     @PostMapping("write")
     public ResponseEntity<?> write(@RequestBody BoardArticleDTO boardArticleDTO) {
@@ -76,7 +79,9 @@ public class BoardArticleController {
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<String> deleteArticle(@RequestParam Long id) {
+    public ResponseEntity<String> deleteArticle(
+            @RequestParam Long id,
+            @RequestParam String userId) { // userId 매개변수 추가
         try {
             Optional<BoardArticle> articleOptional = boardArticleRepository.findById(Math.toIntExact(id));
             if (!articleOptional.isPresent()) {
@@ -84,6 +89,18 @@ public class BoardArticleController {
             }
 
             BoardArticle article = articleOptional.get();
+
+            // userId 검증 (예: article의 작성자와 userId가 일치하는지 확인)
+            if (!article.getAuthor().getUserId().equals(userId)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("유효하지 않은 사용자입니다.");
+            }
+            Optional<User> userOptional = userRepository.findByUserId(userId);
+            if (!userOptional.isPresent()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("유효하지 않은 사용자입니다.");
+            }
+            User user = userOptional.get();
+            article.setDeletedBy(user);
+
             article.setStatus("trash");
             article.setTrashDate(LocalDateTime.now());
             boardArticleRepository.save(article);
@@ -102,7 +119,18 @@ public class BoardArticleController {
 
             // 엔티티를 DTO로 변환
             List<BoardArticleDTO> trashDTOs = trashArticles.stream()
-                    .map(article -> modelMapper.map(article, BoardArticleDTO.class))
+                    .map(article -> new BoardArticleDTO(
+                            article.getId(),
+                            article.getTitle(),
+                            article.getContent(),
+                            article.getBoard() != null ? article.getBoard().getBoardName() : "Unknown",
+                            article.getCreatedAt() != null ? article.getCreatedAt().toString() : "Unknown",
+                            article.getUpdatedAt() != null ? article.getUpdatedAt().toString() : "Unknown",
+                            article.getAuthor() != null ? article.getAuthor().getUsername() : "Unknown",
+                            article.getAuthor() != null ? article.getAuthor().getUserId() : "Unknown",
+                            article.getTrashDate() != null ? article.getTrashDate().toString() : "Unknown",
+                            article.getDeletedBy()
+                    ))
                     .collect(Collectors.toList());
 
             return ResponseEntity.ok(trashDTOs);
@@ -152,5 +180,17 @@ public class BoardArticleController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("게시글 수정에 실패했습니다.");
         }
+    }
+
+    @GetMapping("/boards/{boardId}/articles")
+    public ResponseEntity<Map<String, Object>> getArticlesByBoard(@PathVariable Long boardId) {
+        List<BoardArticleDTO> articles = boardArticleService.getArticlesByBoard(boardId);
+        String boardName = boardService.getBoardNameById(boardId); // boardId로 boardName 조회
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("boardName", boardName);
+        response.put("articles", articles);
+
+        return ResponseEntity.ok(response);
     }
 }
