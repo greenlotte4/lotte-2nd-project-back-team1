@@ -132,4 +132,25 @@ public class BoardArticleController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("게시글 삭제에 실패했습니다.");
         }
     }
+
+    @PutMapping("/edit/{id}")
+    public ResponseEntity<?> updateArticle(@PathVariable Long id, @RequestBody BoardArticleDTO updatedArticle) {
+        try {
+            Optional<BoardArticle> optionalArticle = boardArticleRepository.findById(Math.toIntExact(id));
+            if (!optionalArticle.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("게시글을 찾을 수 없습니다.");
+            }
+
+            BoardArticle article = optionalArticle.get();
+            article.setTitle(updatedArticle.getTitle());
+            article.setContent(updatedArticle.getContent());
+            article.setUpdatedAt(LocalDateTime.now());
+
+            boardArticleRepository.save(article);
+
+            return ResponseEntity.ok("게시글이 성공적으로 수정되었습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("게시글 수정에 실패했습니다.");
+        }
+    }
 }
