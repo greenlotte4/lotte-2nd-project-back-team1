@@ -216,4 +216,9 @@ public class UserService {
         }
         return userDTOList;
     }
+
+    public User findEntityByUserId(String userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+    }
 }
