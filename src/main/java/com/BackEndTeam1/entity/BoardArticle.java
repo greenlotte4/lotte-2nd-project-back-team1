@@ -40,4 +40,17 @@ public class BoardArticle {
     @ManyToOne
     @JoinColumn(name = "board_id")
     private Board board;
+
+    @Column(nullable = false, length = 20)
+    private String status = "active"; // "active", "trash", "deleted"
+
+    @Column(name = "trash_date" , nullable = true)
+    private LocalDateTime trashDate; // 휴지통 이동 날짜
+
+    @ManyToOne(fetch = FetchType.LAZY) // 삭제자와의 관계 설정
+    @JoinColumn(name = "deleted_by") // 외래 키(deleted_by)를 매핑
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private User deletedBy; // 삭제자
+
+
 }

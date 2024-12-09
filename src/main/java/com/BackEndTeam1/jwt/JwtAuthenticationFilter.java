@@ -27,13 +27,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse resp, FilterChain filterChain) throws ServletException, IOException {
 
         String header = req.getHeader(AUTH_HEADER);
-        log.info("여기1" + header);
+//        log.info("여기1" + header);
 
         String token = null;
         if(header != null && header.startsWith(TOKEN_PREFIX)) {
             token = header.substring(TOKEN_PREFIX.length()).trim();
         }
-        log.info("여기2"+token);
+//        log.info("여기2"+token);
 
         // 토큰 검사
         if(token != null) {

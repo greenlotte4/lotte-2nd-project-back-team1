@@ -105,8 +105,9 @@ public class UserController {
     @ResponseBody
     public List<UserDTO> getUserList() {
         List<UserDTO> users = userService.findAll();
-        log.info(users.toString());
+//        log.info(users.toString());
         return users;
+//        return new ArrayList<>();
     }
 
 

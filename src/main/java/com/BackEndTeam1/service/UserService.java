@@ -171,6 +171,9 @@ public class UserService {
     public void deleteUsers(List<String> userIds) {
         log.info("userIds : " + userIds);
         try {
+            for (String userId : userIds) {
+                planHistoryRepository.deleteByUserId(userId);
+            }
             // 삭제할 사용자 조회
             List<User> usersToDelete = userRepository.findAllById(userIds);
 
@@ -206,6 +209,9 @@ public class UserService {
             Plan plan = planRepository.findById(planId)
                     .orElseThrow(() -> new IllegalArgumentException("플랜을 찾을 수 없습니다."));
             user.setPlan(plan);
+            PlanHistory planHistory = planHistoryRepository.findByUserId(userId);
+            planHistory.setPlan(plan);
+            planHistoryRepository.save(planHistory);
             userRepository.save(user);
         }
     }
@@ -266,4 +272,8 @@ public class UserService {
         return modelMapper.map(savedUser, UserDTO.class);
     }
 
+    public User findEntityByUserId(String userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+    }
 }
