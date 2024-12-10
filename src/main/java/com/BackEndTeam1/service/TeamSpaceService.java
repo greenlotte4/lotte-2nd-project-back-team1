@@ -1,11 +1,14 @@
 package com.BackEndTeam1.service;
 
 import com.BackEndTeam1.entity.TeamSpace;
+import com.BackEndTeam1.repository.TeamSpaceMemberRepository;
 import com.BackEndTeam1.repository.TeamSpaceRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Log4j2
 @Service
@@ -13,6 +16,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class TeamSpaceService {
     private final TeamSpaceRepository teamSpaceRepository;
+    private final TeamSpaceMemberRepository teamSpaceMemberRepository;
     public boolean serialNumberExists(String serialNumber) {
         return teamSpaceRepository.existsBySerialnumber(serialNumber);
     }
@@ -51,5 +55,11 @@ public class TeamSpaceService {
         teamSpaceRepository.save(teamSpace);
 
         return true;
+    }
+
+
+    public List<TeamSpace> getTeamSpacesByUserId(String userId) {
+        // TeamSpaceMember 테이블에서 userId 기준으로 TeamSpace 조회
+        return teamSpaceMemberRepository.findTeamSpacesByUser_UserId(userId);
     }
 }
