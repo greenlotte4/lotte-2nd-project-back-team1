@@ -23,8 +23,15 @@ public class TeamSpaceMemberService {
         teamSpaceMemberRepository.deleteAllByTeamSpace_TeamSpaceId(teamSpaceId);
     }
 
-    public void deleteByTeamspaceIdAndUserId(Long teamspaceId, String userId) {
-        teamSpaceMemberRepository.deleteByTeamSpace_TeamSpaceIdAndUser_UserId(teamspaceId, userId);
+    public boolean deleteByTeamspaceIdAndUserId(Long teamspaceId, String userId) {
+        boolean exists = teamSpaceMemberRepository
+                .existsByTeamSpace_TeamSpaceIdAndUser_UserId(teamspaceId, userId);
+
+        if (exists) {
+            teamSpaceMemberRepository.deleteByTeamSpace_TeamSpaceIdAndUser_UserId(teamspaceId, userId);
+            return true; // 삭제 성공
+        }
+        return false; // 삭제 대상이 없음
     }
 
     public boolean addMemberToTeamSpace(Long teamspaceId, String userId) {

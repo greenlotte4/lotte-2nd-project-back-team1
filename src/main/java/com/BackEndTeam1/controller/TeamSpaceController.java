@@ -7,12 +7,15 @@ import com.BackEndTeam1.entity.User;
 import com.BackEndTeam1.service.TeamSpaceMemberService;
 import com.BackEndTeam1.service.TeamSpaceService;
 import com.BackEndTeam1.service.UserService;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -26,10 +29,10 @@ public class TeamSpaceController {
     private final UserService userService;
 
     //방생성
-    @GetMapping("/maketeam")
-    public ResponseEntity<String> makeTeamSpace(
+    @PostMapping("/maketeam")
+    public ResponseEntity<TeamSpace> makeTeamSpace(
             @RequestBody Map<String, Object> TeamSpaces) {
-        String roomname = (String) TeamSpaces.get("roomname");
+        String roomname = (String) TeamSpaces.get("roomName");
         String userId = (String) TeamSpaces.get("userId");
 
         LocalDate today = LocalDate.now();
@@ -58,7 +61,7 @@ public class TeamSpaceController {
                 .build();
         log.info("teamSpaceMember.toString() : " + teamSpaceMember.getUser());
         teamSpaceMemberService.membersave(teamSpaceMember);
-        return ResponseEntity.ok("Team space successfully created with serial number: " + serialNumber);
+        return ResponseEntity.ok(teamSpace);
     }
 
     //초대 번호 생성
@@ -82,21 +85,35 @@ public class TeamSpaceController {
     }
     //방입장
     @PostMapping("/jointeamroom")
-    public ResponseEntity<String> jointeamRoom(@RequestBody Map<String, Object> request){
-        String serialNumber = (String) request.get("serialNumber");
+    public ResponseEntity<?> jointeamRoom(@RequestBody Map<String, Object> request) {
+        String serialNumber = (String) request.get("serialnumber");
         String userId = (String) request.get("userId");
-        TeamSpace teamSpace = teamSpaceService.findBySerialNumber(serialNumber);
-        if (teamSpace == null) {
-            return ResponseEntity.badRequest().body("Invalid serial number.");
-        }
-        // TeamSpaceMember 저장 (중복 확인)
-        boolean isAdded = teamSpaceMemberService.addMemberToTeamSpace(teamSpace.getTeamSpaceId(), userId);
+        log.info("serialNumber : " + serialNumber);
+        log.info("userId : " + userId);
 
-        if (!isAdded) {
-            return ResponseEntity.badRequest().body("User is already a member of this team space.");
-        }
+        try {
+            // 팀 스페이스 찾기
+            TeamSpace teamSpace = teamSpaceService.findBySerialNumber(serialNumber);
+            if (teamSpace == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "Invalid serial number", "serialnumber", serialNumber));
+            }
 
-        return ResponseEntity.ok("Successfully joined the team room: " + teamSpace.getRoomname());
+            // 팀 멤버 추가
+            boolean isAdded = teamSpaceMemberService.addMemberToTeamSpace(teamSpace.getTeamSpaceId(), userId);
+            if (!isAdded) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(Map.of("error", "User already added to the team", "userId", userId));
+            }
+
+            // 성공 응답
+            return ResponseEntity.ok(teamSpace);
+
+        } catch (Exception e) {
+            log.error("Error joining team room", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An unexpected error occurred", "details", e.getMessage()));
+        }
     }
 
     //방삭제
@@ -114,12 +131,21 @@ public class TeamSpaceController {
     }
     //추방 또는 방나가기
     @DeleteMapping("/outteamroom")
-    public ResponseEntity<String> outTeamSpace(@RequestBody Map<String, Object> TeamSpaces) {
-        Long  teamspaceId = Long.valueOf((String) TeamSpaces.get("teamspaceId"));
-        String userId = (String) TeamSpaces.get("userId");
-        teamSpaceMemberService.deleteByTeamspaceIdAndUserId(teamspaceId, userId);
+    public ResponseEntity<Boolean> outTeamSpace(@RequestBody Map<String, Object> teamSpaces) {
+        try {
+            Long teamspaceId = ((Number) teamSpaces.get("teamspaceId")).longValue();
+            String userId = (String) teamSpaces.get("userId");
 
-        return ResponseEntity.ok("User " + userId + " roomnumber: " + teamspaceId);
+            log.info("teamspaceId: " + teamspaceId + ", userId: " + userId);
+
+            // 삭제 처리
+            boolean isDeleted = teamSpaceMemberService.deleteByTeamspaceIdAndUserId(teamspaceId, userId);
+
+            return ResponseEntity.ok(isDeleted);
+        } catch (Exception e) {
+            log.error("방 나가기 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
+        }
     }
     //방수정
     @PutMapping("/updateteamroom")
@@ -138,4 +164,23 @@ public class TeamSpaceController {
         return ResponseEntity.ok("Room name updated successfully to: " + roomname);
     }
 
+    //방 가지고 오기
+    @GetMapping("/getlistteamroom")
+    public ResponseEntity<List<TeamSpace>> getTeamSpaceListTeamRoom(@RequestParam String userId) {
+        log.info("userId : "+userId);
+        try {
+            // 사용자 ID로 참여 중인 방 목록 조회
+            List<TeamSpace> teamSpaces = teamSpaceService.getTeamSpacesByUserId(userId);
+            log.info("teamSpaces.size() : " + teamSpaces.size());
+            if (teamSpaces.isEmpty()) {
+                return ResponseEntity.noContent().build(); // 참여 중인 방이 없을 경우
+            }
+
+            return ResponseEntity.ok(teamSpaces); // 참여 중인 방 목록 반환
+        } catch (Exception e) {
+            log.error("방 목록 조회 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null); // 오류 응답
+        }
+    }
 }
