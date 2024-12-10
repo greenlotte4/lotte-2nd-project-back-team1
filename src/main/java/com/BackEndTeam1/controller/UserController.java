@@ -5,10 +5,11 @@ import com.BackEndTeam1.entity.Plan;
 import com.BackEndTeam1.entity.User;
 import com.BackEndTeam1.jwt.JwtProvider;
 import com.BackEndTeam1.security.MyUserDetails;
-import com.BackEndTeam1.service.PlanHistoryService;
+import com.BackEndTeam1.service.FileService;
 import com.BackEndTeam1.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,7 +17,12 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.*;
 
@@ -29,6 +35,8 @@ public class UserController {
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
+    private final FileService fileService;
+
 
     // 회원가입
     @PostMapping("/register")
@@ -136,5 +144,57 @@ public class UserController {
         }
     }
 
+    @PostMapping("/newPass")
+    public ResponseEntity newPass(@RequestBody Map<String, String> requestBody) {
+        log.info("비밀번호번경 요청 : " + requestBody);
+        String userId = requestBody.get("userId");
+        String pass = requestBody.get("newPassword");
+        return ResponseEntity.status(HttpStatus.OK).body(userService.changePassword(userId,pass));
+    }
+
+    @PutMapping("/newHp")
+    public ResponseEntity changeHp(@RequestBody Map<String, String> requestBody) {
+        log.info("요청온 번호 : " + requestBody);
+
+        String userId = requestBody.get("userId");
+        log.info("유저아이디 : " + userId);
+        String hp = requestBody.get("hp");
+
+        return ResponseEntity.status(HttpStatus.OK).body(userService.changeHp(userId, hp));
+    }
+    @PutMapping("/newEmail")
+    public ResponseEntity changeEmail(@RequestBody Map<String, String> requestBody) {
+        log.info("요청온 이메일 : " + requestBody);
+
+        String userId = requestBody.get("userId");
+        log.info("유저아이디 : " + userId);
+        String email = requestBody.get("email");
+
+        return ResponseEntity.status(HttpStatus.OK).body(userService.changeEmail(userId, email));
+    }
+    @PutMapping("/statusMessage")
+    public ResponseEntity changeStatusMessage(@RequestBody Map<String, String> requestBody) {
+        log.info("요청온 메시지 : " + requestBody);
+
+        String userId = requestBody.get("userId");
+        log.info("유저아이디 : " + userId);
+        String statusMessage = requestBody.get("statusMessage");
+
+        return ResponseEntity.status(HttpStatus.OK).body(userService.changeStatusMessage(userId, statusMessage));
+    }
+
+    @PostMapping("/profile")
+    public ResponseEntity<?> changeProfile(@RequestParam("userId") String userId,
+                                           @RequestPart("profileImage") MultipartFile file) {
+        log.info("요청온 유저아이디: " + userId);
+
+        try {
+            // 서비스 호출
+            String fileDownloadUri = fileService.uploadProfileImage(userId, file);
+            return ResponseEntity.status(HttpStatus.OK).body(fileDownloadUri); // 성공 시 이미지 URL 반환
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("업로드 실패: " + e.getMessage());
+        }
+    }
 
 }

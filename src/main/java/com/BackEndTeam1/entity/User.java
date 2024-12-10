@@ -2,6 +2,7 @@ package com.BackEndTeam1.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.w3c.dom.Text;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -29,12 +30,16 @@ public class User {
     @Column(name = "pass")
     private String pass;
 
+    private String profile;
+
     @ManyToOne
     @JoinColumn(name = "plan_id")
     private Plan plan; // 유료/ 종류
 
     @Builder.Default
     private String role = "USER";
+
+    private String statusMessage; // 상태 메시지
 
     private String hp;
 
