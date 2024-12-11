@@ -188,7 +188,7 @@ public class UserService {
             throw new RuntimeException("사용자 삭제 중 오류 발생: " + e.getMessage());
         }
     }
-
+ 
     public void updateUsers(List<Map<String, Object>> userUpdates) {
         for (Map<String, Object> update : userUpdates) {
             log.info("start");
@@ -271,9 +271,22 @@ public class UserService {
         User savedUser = userRepository.save(user);
         return modelMapper.map(savedUser, UserDTO.class);
     }
-
+    public UserDTO deleteUser(String userId){
+        Optional<User> userDTO = userRepository.findByUserId(userId);
+        User user = modelMapper.map(userDTO, User.class);
+        user.setStatus("DELETED");
+        User savedUser = userRepository.save(user);
+        return modelMapper.map(savedUser, UserDTO.class);
+    }
     public User findEntityByUserId(String userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+    }
+
+    public String findProfileUrl(String userId) {
+        Optional<User> userOpt = userRepository.findByUserId(userId);
+        log.info("요청온 유저아이디2: " + userId);
+        User user = userOpt.get();
+        return user.getProfile(); // 프로필 URL 반환
     }
 }
