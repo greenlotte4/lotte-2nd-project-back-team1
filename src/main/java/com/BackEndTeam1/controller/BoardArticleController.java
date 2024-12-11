@@ -1,6 +1,7 @@
 package com.BackEndTeam1.controller;
 
 import com.BackEndTeam1.dto.BoardArticleDTO;
+import com.BackEndTeam1.dto.MoveArticlesDTO;
 import com.BackEndTeam1.entity.BoardArticle;
 import com.BackEndTeam1.entity.User;
 import com.BackEndTeam1.repository.BoardArticleRepository;
@@ -129,7 +130,8 @@ public class BoardArticleController {
                             article.getAuthor() != null ? article.getAuthor().getUsername() : "Unknown",
                             article.getAuthor() != null ? article.getAuthor().getUserId() : "Unknown",
                             article.getTrashDate() != null ? article.getTrashDate().toString() : "Unknown",
-                            article.getDeletedBy()
+                            article.getDeletedBy(),
+                            article.getStatus()
                     ))
                     .collect(Collectors.toList());
 
@@ -184,13 +186,32 @@ public class BoardArticleController {
 
     @GetMapping("/boards/{boardId}/articles")
     public ResponseEntity<Map<String, Object>> getArticlesByBoard(@PathVariable Long boardId) {
-        List<BoardArticleDTO> articles = boardArticleService.getArticlesByBoard(boardId);
-        String boardName = boardService.getBoardNameById(boardId); // boardId로 boardName 조회
+        // boardId로 모든 articles 가져오기
+        List<BoardArticleDTO> allArticles = boardArticleService.getArticlesByBoard(boardId);
 
+        // status가 'active'인 글만 필터링
+        List<BoardArticleDTO> activeArticles = allArticles.stream()
+                .filter(article -> "active".equals(article.getStatus()))
+                .collect(Collectors.toList());
+
+        // boardId로 boardName 조회
+        String boardName = boardService.getBoardNameById(boardId);
+
+        // 응답 데이터 구성
         Map<String, Object> response = new HashMap<>();
         response.put("boardName", boardName);
-        response.put("articles", articles);
+        response.put("articles", activeArticles);
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/articles/move")
+    public ResponseEntity<?> moveArticlesToBoard(@RequestBody MoveArticlesDTO moveArticlesDTO) {
+        try {
+            boardArticleService.moveBoardArticlesToBoard(moveArticlesDTO.getArticleIds(), moveArticlesDTO.getBoardId());
+            return ResponseEntity.ok("게시글이 성공적으로 이동되었습니다.");
+        }catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("게시글 이동 중 오류 발생");
+        }
     }
 }

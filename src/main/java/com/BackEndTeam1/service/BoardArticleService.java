@@ -73,7 +73,8 @@ public class BoardArticleService {
                         article.getAuthor() != null ? article.getAuthor().getUsername() : "Unknown",// 작성자 이름
                         article.getAuthor() != null ? article.getAuthor().getUserId() : "Unknown",
                         String.valueOf(article.getTrashDate() != null ? article.getTrashDate() : "Unknown"),
-                        article.getDeletedBy()
+                        article.getDeletedBy(),
+                        article.getStatus()
                 ))
                 .collect(Collectors.toList());
     }
@@ -102,9 +103,31 @@ public class BoardArticleService {
                         article.getAuthor() != null ? article.getAuthor().getUsername() : "Unknown",
                         article.getAuthor() != null ? article.getAuthor().getUserId().toString() : null,
                         article.getTrashDate() != null ? article.getTrashDate().toString() : null,
-                        article.getDeletedBy()
+                        article.getDeletedBy(),
+                        article.getStatus()
                 ))
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void moveBoardArticlesToBoard(List<Long> articleIds, Long boardId) {
+        for (Long articleId : articleIds) {
+            BoardArticle boardArticle = boardArticleRepository.findById(Math.toIntExact(articleId))
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid article ID: " + articleId));
+
+            // 게시판 설정
+            Board board = boardRepository.findById(boardId)
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid board ID: " + boardId));
+
+            // 필드 값 변경
+            boardArticle.setBoard(board); // 새로운 게시판으로 설정
+            boardArticle.setStatus("active"); // 상태를 'active'로 변경
+            boardArticle.setUpdatedAt(LocalDateTime.now()); // 수정 시간 업데이트
+            boardArticle.setTrashDate(null); // 휴지통 날짜 제거
+            boardArticle.setDeletedBy(null); // 삭제자 정보 제거
+
+            boardArticleRepository.save(boardArticle); // 저장
+        }
     }
 
 
