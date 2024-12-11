@@ -22,8 +22,8 @@ public class CalendarEvent {
     private Integer calendarEventId;
 
     @ManyToOne
-    @JoinColumn(name = "calendar_category_id")
-    private CalendarCategory calendarCategory;
+    @JoinColumn(name = "calendar_id")
+    private Calendar calendar;
 
     @ManyToOne
     @JoinColumn(name = "assignee_id")
