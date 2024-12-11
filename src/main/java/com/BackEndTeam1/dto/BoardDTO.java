@@ -15,4 +15,5 @@ public class BoardDTO {
     private String updated_at;
     private String created_at;
     private String user_id;
+
 }

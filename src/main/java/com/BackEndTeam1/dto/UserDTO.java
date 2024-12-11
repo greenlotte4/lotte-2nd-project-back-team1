@@ -26,6 +26,8 @@ public class UserDTO {
     private String status;
     private Timestamp createdAt;
     private Timestamp updatedAt;
+    private String statusMessage; // 상태 메시지
+    private String profile;
 
     private PlanHistoryDTO planHistory;
 }

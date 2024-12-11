@@ -14,6 +14,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -23,21 +24,26 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Log4j2
 @AllArgsConstructor
 @Service
 public class UserService {
+
+
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -110,7 +116,11 @@ public class UserService {
             userRepository.save(user);
         }
     }
-    
+    public boolean checkUserIdAndEmail(String userId, String email) {
+        // 데이터베이스에서 아이디와 이메일이 일치하는 사용자 확인
+        Optional<User> user = userRepository.findByUserIdAndEmail(userId, email);
+        return user.isPresent();  // 사용자가 존재하면 true 반환
+    }
     //사용자 정보를 리스트 형식 + 페이지 처리 해서 출력
     public PageResponseDTO<UserDTO> userlist(PageRequestDTO pageRequestDTO) {
         log.info("pageRequestDTO : " + pageRequestDTO);
@@ -161,6 +171,9 @@ public class UserService {
     public void deleteUsers(List<String> userIds) {
         log.info("userIds : " + userIds);
         try {
+            for (String userId : userIds) {
+                planHistoryRepository.deleteByUserId(userId);
+            }
             // 삭제할 사용자 조회
             List<User> usersToDelete = userRepository.findAllById(userIds);
 
@@ -185,8 +198,8 @@ public class UserService {
             log.info("role :" + role);
             String status = (String) update.get("status");
             log.info("status :" + status);
-            Map<String, Object> planIdMap = (Map<String, Object>) update.get("planId");
-            Long planId = ((Number) planIdMap.get("planId")).longValue();
+            Object planIdObj = update.get("planId");
+            Long planId = planIdObj instanceof Number ? ((Number) planIdObj).longValue() : null;
             log.info("planId :" + planId);
 
             User user = userRepository.findById(userId)
@@ -196,6 +209,9 @@ public class UserService {
             Plan plan = planRepository.findById(planId)
                     .orElseThrow(() -> new IllegalArgumentException("플랜을 찾을 수 없습니다."));
             user.setPlan(plan);
+            PlanHistory planHistory = planHistoryRepository.findByUserId(userId);
+            planHistory.setPlan(plan);
+            planHistoryRepository.save(planHistory);
             userRepository.save(user);
         }
     }
@@ -209,5 +225,55 @@ public class UserService {
 
         }
         return userDTOList;
+    }
+
+
+
+    public UserDTO changePassword(String userId, String Pass) {
+        if (Pass == null || Pass.trim().isEmpty()) {
+            log.error("새 비밀번호가 null 또는 빈 값입니다.");
+            throw new IllegalArgumentException("Password cannot be null or empty");
+        }
+        Optional<User> userDTO = userRepository.findByUserId(userId);  // 사용자를 DB에서 조회
+        log.info("userDTO : " + userDTO);
+        // 비밀번호 암호화
+        String encodedPassword = passwordEncoder.encode(Pass);
+        User user = modelMapper.map(userDTO, User.class);
+        user.setPass(encodedPassword);  // 비밀번호 암호화 후 저장
+        User savedUser = userRepository.save(user);
+        return modelMapper.map(savedUser, UserDTO.class);
+    }
+
+    public UserDTO changeHp(String userId, String hp) {
+        log.info("userId : " + userId);
+        Optional<User> userDTO = userRepository.findByUserId(userId);
+        User user = modelMapper.map(userDTO, User.class);
+        user.setHp(hp);
+        User savedUser = userRepository.save(user);
+        return modelMapper.map(savedUser, UserDTO.class);
+    }
+
+    public UserDTO changeEmail(String userId, String email) {
+        log.info("userId : " + userId);
+        Optional<User> userDTO = userRepository.findByUserId(userId);
+        User user = modelMapper.map(userDTO, User.class);
+        user.setEmail(email);
+        User savedUser = userRepository.save(user);
+        return modelMapper.map(savedUser, UserDTO.class);
+    }
+
+
+    public UserDTO changeStatusMessage(String userId, String statusMessage) {
+        log.info("userId : " + userId);
+        Optional<User> userDTO = userRepository.findByUserId(userId);
+        User user = modelMapper.map(userDTO, User.class);
+        user.setStatusMessage(statusMessage);
+        User savedUser = userRepository.save(user);
+        return modelMapper.map(savedUser, UserDTO.class);
+    }
+
+    public User findEntityByUserId(String userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
     }
 }
