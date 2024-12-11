@@ -36,11 +36,14 @@ public class FileService {
         Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
         // 파일의 다운로드 URL 생성
-        String fileDownloadUri = "/upload/" + fileName;
+        String baseUrl = "http://localhost:8080/user/thumb/";
+
+        String fileDownloadUri = "/user/thumb/" + fileName;
+        String saveProfile = baseUrl + fileName;
 
         // 사용자 정보 업데이트: 파일 경로를 profile 필드에 저장
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-        user.setProfile(fileDownloadUri);  // 프로필 URL을 user 엔티티에 저장
+        user.setProfile(saveProfile);  // 프로필 URL을 user 엔티티에 저장
         userRepository.save(user);  // 변경된 사용자 정보 저장
 
         return fileDownloadUri;
