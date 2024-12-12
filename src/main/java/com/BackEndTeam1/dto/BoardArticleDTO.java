@@ -25,10 +25,11 @@ public class BoardArticleDTO {
     private String trashDate;
     private String deletedBy;
     private String status = "active";
+    private Boolean isImportant;
 
     private List<Long> ids;
 
-    public BoardArticleDTO(Long id, String title, String content, String boardName, String createdAt, String updatedAt, String userName, String userId, String trashDate, User deletedBy, String status) {
+    public BoardArticleDTO(Long id, String title, String content, String boardName, String createdAt, String updatedAt, String userName, String userId, String trashDate, User deletedBy, String status, Boolean isImportant) {
         this.id = Math.toIntExact(id);
         this.title = title;
         this.content = content;
@@ -40,6 +41,7 @@ public class BoardArticleDTO {
         this.trashDate = trashDate;
         this.deletedBy = deletedBy != null ? deletedBy.getUsername() : "Unknown"; // 적절히 변환
         this.status = status != null ? status : "active";
+        this.isImportant = isImportant != null ? isImportant : true;
     }
 
 }

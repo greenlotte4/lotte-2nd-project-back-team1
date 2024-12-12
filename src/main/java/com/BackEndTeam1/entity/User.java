@@ -61,4 +61,7 @@ public class User {
     @Builder.Default
     private List<Project> projects = new ArrayList<>();
 
+    public User(String userId) {
+        this.userId = userId;
+    }
 }

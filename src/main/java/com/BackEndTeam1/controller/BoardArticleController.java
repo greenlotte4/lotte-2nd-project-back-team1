@@ -3,8 +3,10 @@ package com.BackEndTeam1.controller;
 import com.BackEndTeam1.dto.BoardArticleDTO;
 import com.BackEndTeam1.dto.MoveArticlesDTO;
 import com.BackEndTeam1.entity.BoardArticle;
+import com.BackEndTeam1.entity.ImportantArticle;
 import com.BackEndTeam1.entity.User;
 import com.BackEndTeam1.repository.BoardArticleRepository;
+import com.BackEndTeam1.repository.ImportantArticleRepository;
 import com.BackEndTeam1.repository.UserRepository;
 import com.BackEndTeam1.service.BoardArticleService;
 import com.BackEndTeam1.service.BoardService;
@@ -32,6 +34,7 @@ public class BoardArticleController {
     private final BoardArticleRepository boardArticleRepository;
     private final UserRepository userRepository;
     private final BoardService boardService;
+    private final ImportantArticleRepository importantArticleRepository;
 
     @PostMapping("write")
     public ResponseEntity<?> write(@RequestBody BoardArticleDTO boardArticleDTO) {
@@ -76,6 +79,18 @@ public class BoardArticleController {
             articleDTO.setUserId(null);
         }
 
+        if (article.getBoard() != null) {
+            articleDTO.setBoardName(article.getBoard().getBoardName()); // boardName 설정
+        } else {
+            articleDTO.setBoardName("알 수 없음");
+        }
+
+        Optional<ImportantArticle> importantArticle = importantArticleRepository.findByUser_UserIdAndArticleId(
+                article.getAuthor().getUserId(),
+                article.getId()
+        );
+        articleDTO.setIsImportant(importantArticle.map(ImportantArticle::getIsImportant).orElse(false));
+
         return ResponseEntity.ok(articleDTO);
     }
 
@@ -114,25 +129,35 @@ public class BoardArticleController {
     }
 
     @GetMapping("/trash")
-    public ResponseEntity<List<BoardArticleDTO>> getTrashArticles() {
+    public ResponseEntity<List<BoardArticleDTO>> getTrashArticles(@RequestParam String userId) {
         try {
-            List<BoardArticle> trashArticles = boardArticleRepository.findByStatus("trash");
+            List<BoardArticle> trashArticles = boardArticleRepository.findByStatusAndDeletedBy("trash", userId);
 
             // 엔티티를 DTO로 변환
             List<BoardArticleDTO> trashDTOs = trashArticles.stream()
-                    .map(article -> new BoardArticleDTO(
-                            article.getId(),
-                            article.getTitle(),
-                            article.getContent(),
-                            article.getBoard() != null ? article.getBoard().getBoardName() : "Unknown",
-                            article.getCreatedAt() != null ? article.getCreatedAt().toString() : "Unknown",
-                            article.getUpdatedAt() != null ? article.getUpdatedAt().toString() : "Unknown",
-                            article.getAuthor() != null ? article.getAuthor().getUsername() : "Unknown",
-                            article.getAuthor() != null ? article.getAuthor().getUserId() : "Unknown",
-                            article.getTrashDate() != null ? article.getTrashDate().toString() : "Unknown",
-                            article.getDeletedBy(),
-                            article.getStatus()
-                    ))
+                    .map(article -> {
+                        // 중요 여부 조회
+                        Boolean isImportant = importantArticleRepository
+                                .findByUser_UserIdAndArticleId(userId, article.getId())
+                                .map(ImportantArticle::getIsImportant)
+                                .orElse(false); // 기본값 false
+
+                        // DTO 생성
+                        return new BoardArticleDTO(
+                                article.getId(),
+                                article.getTitle(),
+                                article.getContent(),
+                                article.getBoard() != null ? article.getBoard().getBoardName() : "Unknown",
+                                article.getCreatedAt() != null ? article.getCreatedAt().toString() : "Unknown",
+                                article.getUpdatedAt() != null ? article.getUpdatedAt().toString() : "Unknown",
+                                article.getAuthor() != null ? article.getAuthor().getUsername() : "Unknown",
+                                article.getAuthor() != null ? article.getAuthor().getUserId() : "Unknown",
+                                article.getTrashDate() != null ? article.getTrashDate().toString() : "Unknown",
+                                article.getDeletedBy(),
+                                article.getStatus(),
+                                isImportant // isImportant 필드 추가
+                        );
+                    })
                     .collect(Collectors.toList());
 
             return ResponseEntity.ok(trashDTOs);
@@ -213,5 +238,18 @@ public class BoardArticleController {
         }catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("게시글 이동 중 오류 발생");
         }
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<BoardArticleDTO>> getArticlesByUser(@PathVariable String userId) {
+        List<BoardArticleDTO> articles = boardArticleService.getArticlesByUser(userId);
+
+        // `isImportant` 값을 설정
+        articles.forEach(article -> {
+            boolean isImportant = boardArticleService.isArticleImportant(userId, (long) article.getId());
+            article.setIsImportant(isImportant); // DTO에 설정
+        });
+
+        return ResponseEntity.ok(articles);
     }
 }
