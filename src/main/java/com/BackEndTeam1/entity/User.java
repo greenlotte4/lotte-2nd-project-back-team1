@@ -57,4 +57,13 @@ public class User {
     @Column(name = "updated_at")
     private Timestamp updatedAt; // 로그인 날
 
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Builder.Default
+    private List<Project> projects = new ArrayList<>();
+
+    public User(String userId) {
+        this.userId = userId;
+    }
+
 }

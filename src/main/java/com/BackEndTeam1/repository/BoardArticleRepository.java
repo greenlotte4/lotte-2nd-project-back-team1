@@ -14,6 +14,9 @@ public interface BoardArticleRepository extends JpaRepository<BoardArticle, Inte
 
     List<BoardArticle> findByStatus(String status);
 
+    @Query("SELECT b FROM BoardArticle b WHERE b.status = :status AND b.deletedBy.userId = :userId")
+    List<BoardArticle> findByStatusAndDeletedBy(String status, String userId);
+
     @Query("SELECT b FROM BoardArticle b WHERE b.status = 'trash' AND b.trashDate <= :cutoffDate")
     List<BoardArticle> findOldTrashArticles(@Param("cutoffDate") LocalDateTime cutoffDate);
 
@@ -28,5 +31,7 @@ public interface BoardArticleRepository extends JpaRepository<BoardArticle, Inte
     List<BoardArticle> findByBoard(Board board);
 
     List<BoardArticle> findByBoard_BoardId(Long boardId);
+
+    List<BoardArticle> findByAuthor_UserIdAndStatus(String userId, String status);
 
 }

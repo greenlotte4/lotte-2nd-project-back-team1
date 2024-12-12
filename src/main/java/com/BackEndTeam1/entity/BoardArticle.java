@@ -53,4 +53,7 @@ public class BoardArticle {
     private User deletedBy; // 삭제자
 
 
+    public BoardArticle(Long articleId) {
+        this.id = articleId;
+    }
 }
