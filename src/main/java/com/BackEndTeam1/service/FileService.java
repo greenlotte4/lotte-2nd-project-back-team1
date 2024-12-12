@@ -36,7 +36,7 @@ public class FileService {
         Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
         // 파일의 다운로드 URL 생성
-        String baseUrl = "http://localhost:8080/user/thumb/";
+        String baseUrl = "http://hubflow.store:8080/user/thumb/";
 
         String fileDownloadUri = "/user/thumb/" + fileName;
         String saveProfile = baseUrl + fileName;
