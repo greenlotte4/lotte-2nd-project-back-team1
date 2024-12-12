@@ -2,7 +2,6 @@ package com.BackEndTeam1.service;
 
 import com.BackEndTeam1.dto.CalendarDTO;
 import com.BackEndTeam1.dto.CalendarEventDTO;
-import com.BackEndTeam1.dto.UserDTO;
 import com.BackEndTeam1.entity.Calendar;
 import com.BackEndTeam1.entity.CalendarEvent;
 import com.BackEndTeam1.entity.CalendarUser;
@@ -11,6 +10,7 @@ import com.BackEndTeam1.repository.CalendarEventRepository;
 import com.BackEndTeam1.repository.CalendarRepository;
 import com.BackEndTeam1.repository.CalendarUserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+@Log4j2
 @RequiredArgsConstructor
 @Service
 public class CalendarService {
@@ -102,5 +103,35 @@ public class CalendarService {
                     return calendarDTO;
                 })
                 .collect(Collectors.toList());
+    }
+
+    public void deleteCalendar(Integer calendarId) {
+        Calendar calendar = calendarRepository.findById(calendarId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 캘린더입니다."));
+        log.info(calendar.getCalendarId());
+        // 달력 이벤트 삭제
+        calendarEventRepository.deleteByCalendarId(calendar.getCalendarId());
+        // 달력 사용자 삭제
+        calendarUserRepository.deleteByCalendarId(calendar.getCalendarId());
+        calendarRepository.delete(calendar);
+    }
+
+    public void handleInvite(String calendarCode, String userId) {
+        // calendarCode로 캘린더 조회
+        Calendar calendar = (Calendar) calendarRepository.findByCalendarCode(calendarCode)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 캘린더 코드입니다."));
+
+        // CalendarUser 중복 확인
+        if (calendarUserRepository.existsByCalendar_CalendarIdAndUser_UserId(calendar.getCalendarId(), userId)) {
+            throw new IllegalArgumentException("이미 해당 캘린더에 가입되어 있습니다.");
+        }
+
+        // CalendarUser 추가
+        User user = new User();
+        user.setUserId(userId);
+        CalendarUser calendarUser = new CalendarUser();
+        calendarUser.setCalendar(calendar);
+        calendarUser.setUser(user);
+        calendarUserRepository.save(calendarUser);
     }
 }

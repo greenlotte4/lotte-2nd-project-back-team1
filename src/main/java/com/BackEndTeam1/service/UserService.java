@@ -73,7 +73,6 @@ public class UserService {
         if (user.isEmpty()) {
             throw new RuntimeException("User not found with ID: " + userId);
         }
-        log.info("user.get().getCreatedAt()" + user.get().getCreatedAt());
         return modelMapper.map(user.get(), UserDTO.class);
     }
 
