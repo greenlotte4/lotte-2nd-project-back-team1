@@ -24,10 +24,11 @@ public class BoardArticleDTO {
     private String userId; // 작성자 ID 추가
     private String trashDate;
     private String deletedBy;
+    private String status = "active";
 
     private List<Long> ids;
 
-    public BoardArticleDTO(Long id, String title, String content, String boardName, String createdAt, String updatedAt, String userName, String userId, String trashDate, User deletedBy) {
+    public BoardArticleDTO(Long id, String title, String content, String boardName, String createdAt, String updatedAt, String userName, String userId, String trashDate, User deletedBy, String status) {
         this.id = Math.toIntExact(id);
         this.title = title;
         this.content = content;
@@ -38,6 +39,7 @@ public class BoardArticleDTO {
         this.userId = userId;
         this.trashDate = trashDate;
         this.deletedBy = deletedBy != null ? deletedBy.getUsername() : "Unknown"; // 적절히 변환
+        this.status = status != null ? status : "active";
     }
 
 }

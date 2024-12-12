@@ -7,14 +7,18 @@ import com.BackEndTeam1.jwt.JwtProvider;
 import com.BackEndTeam1.security.MyUserDetails;
 import com.BackEndTeam1.service.FileService;
 import com.BackEndTeam1.service.UserService;
+import com.BackEndTeam1.util.CustomFileUtil;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,6 +40,7 @@ public class UserController {
     private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
     private final FileService fileService;
+    private final CustomFileUtil customFileUtil;
 
 
     // 회원가입
@@ -56,6 +61,7 @@ public class UserController {
     public ResponseEntity login(@RequestBody UserDTO userDTO) {
         log.info("로그인 요청"+userDTO.getUserId());
         try {
+
             log.info("로그인 트라이"+userDTO.getUserId());
 
             // 시큐리티 사용자 검증
@@ -63,9 +69,16 @@ public class UserController {
                     = new UsernamePasswordAuthenticationToken(userDTO.getUserId(), userDTO.getPass());
 
             Authentication authentication = authenticationManager.authenticate(token);
+            SecurityContextHolder.getContext().setAuthentication(authentication);  // 이 부분 추가
 
             MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
             User user = userDetails.getUser();
+
+            String status = user.getStatus();
+
+
+
+
             log.info("user : " + user);
             userService.updateLastLoginTime(user.getUserId());
             // JWT 토큰 발행
@@ -84,7 +97,20 @@ public class UserController {
             resultMap.put("accessToken", accessToken);
             resultMap.put("refreshToken", refreshToken);
 
-            return ResponseEntity.ok(resultMap);
+            if (status.equals("BANED")) {
+                log.info("벤");
+
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("정지된 회원입니다");
+            } else if (status.equals("DELETED")) {
+                log.info("탈퇴");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("탈퇴한 회원입니다.");
+            } else if (status.equals("SLEEP")) {
+                log.info("휴면");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("휴면 계정입니다.");
+            } else {
+                // "활동 중" 상태일 경우
+                return ResponseEntity.ok(resultMap);
+            }
 
         }catch (Exception e) {
             log.error(e.getMessage());
@@ -110,6 +136,13 @@ public class UserController {
 //        return new ArrayList<>();
     }
 
+    @GetMapping("/thumb/{fileName}")
+    public ResponseEntity<Resource> thumbnail(@PathVariable String fileName){
+
+        log.info(fileName);
+
+        return customFileUtil.getFile(fileName);
+    }
 
 
 
@@ -175,7 +208,8 @@ public class UserController {
     @PutMapping("/statusMessage")
     public ResponseEntity changeStatusMessage(@RequestBody Map<String, String> requestBody) {
         log.info("요청온 메시지 : " + requestBody);
-
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        log.info("현재 인증 상태: " + authentication);
         String userId = requestBody.get("userId");
         log.info("유저아이디 : " + userId);
         String statusMessage = requestBody.get("statusMessage");
@@ -197,4 +231,16 @@ public class UserController {
         }
     }
 
+    @PutMapping("/delete")
+    public ResponseEntity delete(@RequestBody Map<String, String> requestBody) {
+        log.info("삭제 요청온 유저아이디: " + requestBody);
+        String userId = requestBody.get("userId");
+        return ResponseEntity.status(HttpStatus.OK).body(userService.deleteUser(userId));
+    }
+    @GetMapping("/profileUrl")
+    public ResponseEntity<String> profileUrl(@RequestParam String userId) {
+        log.info("요청온 유저아이디1: " + userId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(userService.findProfileUrl(userId));
+    }
 }
