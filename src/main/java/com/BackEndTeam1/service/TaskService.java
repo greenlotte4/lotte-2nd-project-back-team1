@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -49,5 +51,10 @@ public class TaskService {
     //삭제
     public void delete(Long id) {
         taskRepository.deleteById(id);
+    }
+
+    public Object findByProjectItemId(Long projectItemId) {
+        Object tasks = taskRepository.findAllByProjectItem_ProjectItemId(projectItemId);
+        return tasks;
     }
 }

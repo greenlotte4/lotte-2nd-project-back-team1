@@ -1,5 +1,7 @@
 package com.BackEndTeam1.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,13 +26,10 @@ public class ProjectItem {
     @Column(name = "project_item_id")
     private Long projectItemId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "project_id")
+    @JsonBackReference
     private Project project;
-
-    @OneToMany(mappedBy = "projectItem", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @Builder.Default
-    private Set<Task> tasks = new HashSet<>();
 
     @Column(name = "name")
     private String name;
@@ -44,6 +43,9 @@ public class ProjectItem {
     @Column(name = "updated_at")
     private Timestamp updatedAt;
 
+    @OneToMany(mappedBy = "projectItem", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Task> tasks;
 
     public void setName(String name) {
         this.name = name;

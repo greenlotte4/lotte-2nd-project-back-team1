@@ -1,5 +1,7 @@
 package com.BackEndTeam1.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.time.Instant;
 
 @Getter
 @Setter
@@ -23,13 +26,12 @@ public class Project {
     @Column(name = "project_id")
     private Long projectId;
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @Builder.Default
-    private Set<ProjectItem> projectItems = new HashSet<>();
-
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private ProjectUser projectUser;
 
     @Column(name = "max_collaborators")
     @Builder.Default
@@ -45,9 +47,17 @@ public class Project {
     private Timestamp endDate;
 
     @Column(name = "created_at")
-    private Timestamp createdAt;
+    @Builder.Default
+    private Timestamp createdAt = Timestamp.from(Instant.now());
 
     @Column(name = "updated_at")
     private Timestamp updatedAt;
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<ProjectItem> ProjectItems;
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProjectUser> projectUsers = new ArrayList<>();
 }
 
