@@ -1,9 +1,10 @@
 package com.BackEndTeam1.service;
 
-import com.BackEndTeam1.dto.ProjectDTO;
-import com.BackEndTeam1.dto.ProjectSelectDTO;
+import com.BackEndTeam1.dto.*;
 import com.BackEndTeam1.entity.Project;
+import com.BackEndTeam1.entity.ProjectUser;
 import com.BackEndTeam1.entity.User;
+import com.BackEndTeam1.repository.ProjectItemRepository;
 import com.BackEndTeam1.repository.ProjectRepository;
 import com.BackEndTeam1.repository.ProjectUserRepository;
 import com.BackEndTeam1.repository.UserRepository;
@@ -13,6 +14,9 @@ import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,6 +27,7 @@ import java.util.stream.Collectors;
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
+    private final ProjectItemRepository projectItemRepository;
     private final ProjectUserRepository projectUserRepository;
     private final ModelMapper modelMapper;
     private final UserRepository userRepository;
@@ -36,31 +41,39 @@ public class ProjectService {
         return projectSelectDTO;
     }
 
-
-
     // 맞는 ID를 가지고 세이브 되게 설정됨
-    public ProjectDTO create(ProjectDTO projectDTO) {
-
+    public ProjectDTO create(ProjectDTO projectDTO, String userId) {
         log.info("Service: Creating project with data: {}", projectDTO);
+        log.info("사용자 id값은 : "+userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
 
-        User user = userRepository.findById(projectDTO.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found: " + projectDTO.getUserId()));
-
-        // Project 엔티티 생성 및 저장
         Project project = new Project();
         project.setUser(user);
         project.setName(projectDTO.getName());
         project.setStartDate(projectDTO.getStartDate());
         project.setEndDate(projectDTO.getEndDate());
         project.setMaxCollaborators(projectDTO.getMaxCollaborators());
-
+        project.setCreatedAt(Timestamp.valueOf(projectDTO.getCreatedAt()));
         project = projectRepository.save(project);
 
-        // 저장된 Project 엔티티를 DTO로 변환하여 반환
+        if (projectDTO.getProjectUser() != null) {
+            for (String projectUserId : projectDTO.getProjectUser()) {
+                User projectUser = userRepository.findById(projectUserId)
+                        .orElseThrow(() -> new RuntimeException("User not found: " + projectUserId));
+                ProjectUser projectUserEntity = new ProjectUser();
+                projectUserEntity.setProject(project);
+                projectUserEntity.setUser(projectUser);
+                projectUserEntity.setCreatedAt(LocalDateTime.now());
+                projectUserRepository.save(projectUserEntity);
+            }
+        }
         return modelMapper.map(project, ProjectDTO.class);
     }
 
-    // 자기가 만든 프로젝트를 List화
+
+
+    // 사용자가 만든 프로젝트를 리스트로 반환
     public List<ProjectDTO> LoginUserfindAll(String userId) {
         List<Project> projects = projectRepository.findAllByUser_UserId(userId);
         return projects.stream()
@@ -68,13 +81,14 @@ public class ProjectService {
                 .collect(Collectors.toList());
     }
 
-    // 참여된 프로젝트를 List화
+    // 사용자가 참여한 프로젝트를 리스트로 반환
     public List<ProjectDTO> InProjectFindAll(String userId) {
         List<Project> projects = projectRepository.findAllByUserProjectId(userId);
         return projects.stream()
                 .map(project -> modelMapper.map(project, ProjectDTO.class))
                 .collect(Collectors.toList());
     }
+
 
     // 프로젝트 수정 메서드
     public ProjectDTO updateProject(Long projectId, ProjectDTO projectDTO) {
@@ -91,6 +105,14 @@ public class ProjectService {
         if (projectDTO.getEndDate() != null) {
             chProject.setEndDate(projectDTO.getEndDate());
         }
+        if (projectDTO.getProjectUser() != null) {
+            for (String projectUserId : projectDTO.getProjectUser()) {
+                projectDTO.setProjectUser(Collections.singletonList(projectUserId));
+            }
+        }
+        if (projectDTO.getName() != null) {
+            chProject.setName(projectDTO.getName());
+        }
 
         Project updatedProject = projectRepository.save(chProject);
         return modelMapper.map(updatedProject, ProjectDTO.class);
@@ -103,4 +125,35 @@ public class ProjectService {
     }
 
 
+    public ProjectDTO getProjectDetails(Long projectId) {
+        // 프로젝트 가져오기
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("프로젝트를 찾을 수 없습니다."));
+
+        // 프로젝트에 참여한 유저 이름 리스트 가져오기
+        List<String> projectUserNames = projectUserRepository.findByProject(project)
+                .stream()
+                .map(projectUser -> projectUser.getUser() != null ? projectUser.getUser().getUsername() : "Unknown User")
+                .toList();
+
+        // 프로젝트 아이템과 태스크 데이터를 DTO로 변환
+        List<ProjectItemDTO> projectItemDTOs = projectItemRepository.findByProject(project)
+                .stream()
+                .map(projectItem -> {
+                    // 태스크 리스트를 DTO로 변환
+                    List<TaskDTO> taskDTOs = projectItem.getTasks() != null
+                            ? projectItem.getTasks().stream().map(TaskDTO::new).toList()
+                            : List.of();
+
+                    return new ProjectItemDTO(projectItem, taskDTOs);
+                })
+                .toList();
+
+        // ProjectDTO 생성 및 반환
+        return new ProjectDTO(project, projectUserNames, projectItemDTOs);
+    }
+
+    public List<Project> findByUserId(String userId) {
+        return projectRepository.findByUserId(userId);
+    }
 }

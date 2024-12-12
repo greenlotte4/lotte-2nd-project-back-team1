@@ -2,6 +2,7 @@ package com.BackEndTeam1.dto;
 
 
 import com.BackEndTeam1.entity.ProjectItem;
+import com.BackEndTeam1.entity.Task;
 import com.BackEndTeam1.entity.User;
 import lombok.*;
 import java.sql.Date;
@@ -15,7 +16,7 @@ import java.time.LocalDateTime;
 public class TaskDTO {
     private Long taskId;
     private ProjectItem projectItem;
-    private User assignee;
+    private String assignee;
     private String name;
     private String description;
     private Integer priority;
@@ -24,4 +25,13 @@ public class TaskDTO {
     private Date endDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public TaskDTO(Task task) {
+        this.taskId = task.getTaskId();
+        this.name = task.getName();
+        this.status = task.getStatus();
+        this.assignee = task.getAssignee() != null ? task.getAssignee().getUserId() : "Unassigned";
+        this.startDate = task.getStartDate();
+        this.endDate = task.getEndDate();
+    }
 }

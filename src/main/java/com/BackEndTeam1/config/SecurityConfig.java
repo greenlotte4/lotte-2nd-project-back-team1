@@ -39,11 +39,11 @@ public class SecurityConfig {
                 .sessionManagement(config -> config.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/adin/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/article/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/article/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/product/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/product/**").permitAll()
+//                        .requestMatchers("/adin/**").hasRole("ADMIN")
+//                        .requestMatchers(HttpMethod.POST, "/article/**").permitAll()
+//                        .requestMatchers(HttpMethod.GET, "/article/**").permitAll()
+//                        .requestMatchers(HttpMethod.POST, "/product/**").hasRole("ADMIN")
+//                        .requestMatchers(HttpMethod.GET, "/product/**").permitAll()
                         .anyRequest().permitAll()
                 );
 
