@@ -39,7 +39,7 @@ public class CalendarEvent {
 
     @Column(name = "end_date")
     private LocalDateTime endDate;
-
+    private Boolean allDay;
     private Boolean notification;
 
     @Column(name = "created_at")
@@ -47,5 +47,6 @@ public class CalendarEvent {
 
     @Column(name = "updated_at")
     private Timestamp updatedAt;
+
 }
 

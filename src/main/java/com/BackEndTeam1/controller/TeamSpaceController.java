@@ -1,5 +1,7 @@
 package com.BackEndTeam1.controller;
 
+import com.BackEndTeam1.dto.TeamSpaceMemberDTO;
+import com.BackEndTeam1.dto.TeamSpaceUsersDto;
 import com.BackEndTeam1.dto.UserDTO;
 import com.BackEndTeam1.entity.TeamSpace;
 import com.BackEndTeam1.entity.TeamSpaceMember;
@@ -182,5 +184,11 @@ public class TeamSpaceController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(null); // 오류 응답
         }
+    }
+    @PostMapping("/listbyid")
+    public ResponseEntity<?> postUserListbyUserId(@RequestBody Map<String, Object> request) {
+        String userId = (String) request.get("userId");
+        List<TeamSpaceUsersDto> users = teamSpaceMemberService.getUsersInTeamSpacesByUserId(userId);
+        return ResponseEntity.ok(users);
     }
 }

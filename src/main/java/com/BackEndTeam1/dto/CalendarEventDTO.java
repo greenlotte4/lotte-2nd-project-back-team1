@@ -25,6 +25,7 @@ public class CalendarEventDTO {
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private Boolean notification;
+    private Boolean allDay;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 }
