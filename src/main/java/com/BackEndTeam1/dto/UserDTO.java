@@ -31,4 +31,9 @@ public class UserDTO {
     private String userStatus;
 
     private PlanHistoryDTO planHistory;
+
+    public UserDTO(String userId, String username) {
+        this.userId = userId;
+        this.username = username;
+    }
 }

@@ -19,4 +19,8 @@ public interface TeamSpaceMemberRepository extends JpaRepository<TeamSpaceMember
 
     @Query("SELECT tsm.teamSpace FROM TeamSpaceMember tsm WHERE tsm.user.userId = :userId")
     List<TeamSpace> findTeamSpacesByUser_UserId(@Param("userId") String userId);
+
+    List<TeamSpaceMember> findByTeamSpace_TeamSpaceIdIn(List<Long> teamSpaceIds);
+
+    List<TeamSpaceMember> findByUser_UserId(String userId);
 }
