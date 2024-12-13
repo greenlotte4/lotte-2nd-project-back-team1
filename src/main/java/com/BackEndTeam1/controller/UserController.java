@@ -76,9 +76,6 @@ public class UserController {
 
             String status = user.getStatus();
 
-
-
-
             log.info("user : " + user);
             userService.updateLastLoginTime(user.getUserId());
             // JWT 토큰 발행
@@ -99,7 +96,6 @@ public class UserController {
 
             if (status.equals("BANED")) {
                 log.info("벤");
-
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("정지된 회원입니다");
             } else if (status.equals("DELETED")) {
                 log.info("탈퇴");
@@ -115,8 +111,8 @@ public class UserController {
         }catch (Exception e) {
             log.error(e.getMessage());
             return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body("USER NOT FOUND");
+                    .status(HttpStatus.FORBIDDEN)
+                    .body("아이디 또는 비밀번호가 다릅니다.");
         }
     }
 
@@ -242,5 +238,19 @@ public class UserController {
         log.info("요청온 유저아이디1: " + userId);
 
         return ResponseEntity.status(HttpStatus.OK).body(userService.findProfileUrl(userId));
+    }
+
+    @PutMapping("/loginStatus")
+    public ResponseEntity loginStatus(@RequestBody Map<String, String> requestBody) {
+        String userId = requestBody.get("userId");
+        String userStatus = requestBody.get("userStatus");
+        log.info("유저 상태 변경요청: " + userStatus);
+        return ResponseEntity.status(HttpStatus.OK).body(userService.loginStatusChange(userId,userStatus));
+    }
+
+    @GetMapping("/selectLoginStatus")
+    public ResponseEntity selectLoginStatus(@RequestParam String userId) {
+        log.info("유저 상태 조회요청: " + userId);
+        return ResponseEntity.status(HttpStatus.OK).body(userService.selectStatus(userId));
     }
 }

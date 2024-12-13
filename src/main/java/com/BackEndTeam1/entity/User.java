@@ -48,7 +48,7 @@ public class User {
     private String addr2;
 
     private String zipcode;
-
+    private String userStatus;
     private String status;
 
     @Column(name = "created_at")

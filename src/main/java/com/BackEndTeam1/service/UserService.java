@@ -288,4 +288,18 @@ public class UserService {
         User user = userOpt.get();
         return user.getProfile(); // 프로필 URL 반환
     }
+
+    public UserDTO loginStatusChange(String userId, String userStatus ) {
+        Optional<User> userOpt = userRepository.findByUserId(userId);
+        User user = userOpt.get();
+        user.setUserStatus(userStatus);
+        User savedUser = userRepository.save(user);
+        return modelMapper.map(savedUser, UserDTO.class);
+    }
+
+    public String selectStatus(String userId) {
+        Optional<User> userOpt = userRepository.findByUserId(userId);
+        User user = userOpt.get();
+        return user.getUserStatus();
+    }
 }
