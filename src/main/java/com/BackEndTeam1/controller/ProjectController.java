@@ -47,7 +47,7 @@ public class ProjectController {
         log.info("Received userId: {}", userId); // userId 로그 출력
         log.info("Received project data: {}", projectDTO);
 
-        if (projectDTO.getUser() == null) {
+        if (projectDTO.getUserId() == null) {
             User user = new User();
             user.setUserId(userId);
             projectDTO.setUser(user);
@@ -68,20 +68,17 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/project/update/{no}")
-    public ResponseEntity<ProjectDTO> UpdateProject(@RequestBody ProjectDTO projectDTO ,@PathVariable Long no) {
-        projectDTO = projectService.getProjectDetails(no);
-
-        projectDTO.setName(projectDTO.getName());
-        projectDTO.setProjectUser(projectDTO.getProjectUser());
+    @PutMapping("/project/update/{id}")
+    public ResponseEntity<ProjectDTO> updateProject(
+            @RequestBody ProjectDTO projectDTO, @PathVariable Long id) {
+        if (!id.equals(projectDTO.getProjectId())) {
+            throw new RuntimeException("경로 ID와 요청 바디 ID가 일치하지 않습니다.");
+        }
         projectDTO.setUpdatedAt(LocalDateTime.now());
-        projectDTO.setStartDate(projectDTO.getStartDate());
-        projectDTO.setEndDate(projectDTO.getEndDate());
-
-        projectService.updateProject(no, projectDTO);
-
+        projectService.updateProject(id, projectDTO);
         return ResponseEntity.ok(projectDTO);
     }
+
 
     @DeleteMapping("/project/{no}")
     public void DeleteProject(@PathVariable Long no) {

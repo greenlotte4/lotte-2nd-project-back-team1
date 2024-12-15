@@ -23,7 +23,7 @@ public class Task {
     private Long taskId;
 
     @ManyToOne
-    @JoinColumn(name = "project_item_id")
+    @JoinColumn(name = "project_item_id", nullable = false)
     private ProjectItem projectItem;
 
     @ManyToOne(fetch = FetchType.LAZY)
