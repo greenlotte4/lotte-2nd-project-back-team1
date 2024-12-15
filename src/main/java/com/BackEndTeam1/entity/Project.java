@@ -58,6 +58,10 @@ public class Project {
     private List<ProjectItem> ProjectItems;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProjectUser> projectUsers = new ArrayList<>();
+    private List<ProjectUser> projectUsers;
+
+    public List<ProjectUser> projectUsers() {
+        return projectUsers;
+    }
 }
 

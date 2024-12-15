@@ -43,9 +43,10 @@ public class ProjectItem {
     @Column(name = "updated_at")
     private Timestamp updatedAt;
 
-    @OneToMany(mappedBy = "projectItem", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "projectItem", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore
     private List<Task> tasks;
+
 
     public void setName(String name) {
         this.name = name;
