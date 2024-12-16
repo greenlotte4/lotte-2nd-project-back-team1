@@ -9,4 +9,6 @@ public interface CalendarRepository extends JpaRepository<Calendar, Integer> {
     boolean existsByCalendarCode(String inviteCode);
 
     Optional<Object> findByCalendarCode(String calendarCode);
+
+    int countByUser_UserId(String userId);
 }
