@@ -2,7 +2,9 @@ package com.BackEndTeam1.service;
 
 import com.BackEndTeam1.dto.TaskDTO;
 import com.BackEndTeam1.entity.Task;
+import com.BackEndTeam1.entity.User;
 import com.BackEndTeam1.repository.TaskRepository;
+import com.BackEndTeam1.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -16,36 +18,47 @@ import java.util.List;
 public class TaskService {
 
     private final TaskRepository taskRepository;
+    private final UserRepository userRepository;
     private final ModelMapper modelMapper;
 
     //생성
-    public Task save(TaskDTO taskDTO) {
+    public Task createTask(TaskDTO taskDTO) {
         taskRepository.save(modelMapper.map(taskDTO, Task.class));
         return modelMapper.map(taskDTO, Task.class);
     }
     //수정
-    public Task update(Long no, TaskDTO taskDTO) {
-        Task task = taskRepository.findById(no).
-                orElseThrow(() -> new RuntimeException("맞는 task를 찾을 수 없습니다." + no));
+    public Task updateTask(Long taskId, TaskDTO taskDTO) {
+        // Task를 ID로 조회
+        Task existingTask = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task ID를 찾을 수 없습니다: " + taskId));
 
-        if(taskDTO.getAssignee() != null) {
-            task.setAsignee(taskDTO.getAssignee());
-        }
+        // DTO의 데이터를 Task 엔티티에 매핑
         if (taskDTO.getName() != null) {
-            task.setName(taskDTO.getName());
+            existingTask.setName(taskDTO.getName());
         }
-        if (taskDTO.getDescription() != null) {
-            task.setDescription(taskDTO.getDescription());
-        }
-        if (taskDTO.getPriority() != null) {
-            task.setPriority(taskDTO.getPriority());
+        if (taskDTO.getAssignee() != null) {
+            User assignee = userRepository.findByUserId(taskDTO.getAssignee())
+                    .orElseThrow(() -> new RuntimeException("유효하지 않은 사용자 ID: " + taskDTO.getAssignee()));
+            existingTask.setAsignee(assignee.getUserId());
         }
         if (taskDTO.getStatus() != null) {
-            task.setStatus(taskDTO.getStatus());
+            existingTask.setStatus(taskDTO.getStatus());
+        }
+        if (taskDTO.getStartDate() != null) {
+            existingTask.setStartDate(taskDTO.getStartDate());
+        }
+        if (taskDTO.getEndDate() != null) {
+            existingTask.setEndDate(taskDTO.getEndDate());
+        }
+        if (taskDTO.getDescription() != null) {
+            existingTask.setDescription(taskDTO.getDescription());
+        }
+        if (taskDTO.getPriority() != null) {
+            existingTask.setPriority(taskDTO.getPriority());
         }
 
-        Task TaskUpdate = taskRepository.save(task);
-        return TaskUpdate;
+        // 업데이트된 Task 저장
+        return taskRepository.save(existingTask);
     }
 
     //삭제
