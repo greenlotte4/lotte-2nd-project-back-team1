@@ -22,4 +22,6 @@ public interface CalendarUserRepository extends JpaRepository<CalendarUser, Inte
     void deleteByCalendarIdAndUserId(@Param("calendarId") Integer calendarId, @Param("userId") String userId);
 
     boolean existsByCalendar_CalendarIdAndUser_UserId(Integer calendarId, String userId);
+
+    int countByCalendar_CalendarId(Integer calendarId);
 }
