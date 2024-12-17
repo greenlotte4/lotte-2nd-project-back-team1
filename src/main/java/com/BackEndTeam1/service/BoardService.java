@@ -25,7 +25,7 @@ public class BoardService {
                 .map(board -> BoardDTO.builder()
                         .board_id(board.getBoardId())
                         .board_name(board.getBoardName())
-                        .max_collaborators(board.getMaxCollaborators())
+                        .max_collaborators(board.getMaxCollaborators() != null ? board.getMaxCollaborators() : 3)
                         .created_at(board.getCreatedAt() != null ? board.getCreatedAt().toString() : null)
                         .updated_at(board.getUpdatedAt() != null ? board.getUpdatedAt().toString() : null)
                         .user_id(board.getUser() != null ? board.getUser().getUserId() : null)
