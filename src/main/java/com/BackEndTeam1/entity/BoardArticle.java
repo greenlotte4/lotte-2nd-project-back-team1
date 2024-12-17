@@ -56,6 +56,12 @@ public class BoardArticle {
     @OneToMany(mappedBy = "boardArticle", cascade = CascadeType.ALL, fetch = FetchType.LAZY) // BoardFile과 연관 설정
     private List<BoardFile> files; // 게시글에 첨부된 파일들
 
+    @Column(name = "must_read", nullable = false)
+    private Boolean mustRead = false; // 필독 여부 (기본값: false)
+
+    @Column(name = "notification", nullable = false)
+    private Boolean notification = false;
+
 
     public BoardArticle(Long articleId) {
         this.id = articleId;

@@ -96,6 +96,7 @@ public class BoardArticleController {
         articleDTO.setContent(article.getContent());
         articleDTO.setCreatedAt(String.valueOf(article.getCreatedAt()));
         articleDTO.setUpdatedAt(String.valueOf(article.getUpdatedAt()));
+        articleDTO.setMustRead(article.getMustRead());
 
         // 작성자 정보 설정
         if (article.getAuthor() != null) {
@@ -189,6 +190,8 @@ public class BoardArticleController {
                                 .map(ImportantArticle::getIsImportant)
                                 .orElse(false); // 기본값 false
 
+                        Boolean mustRead = article.getMustRead() != null ? article.getMustRead() : false;
+
                         // DTO 생성
                         return new BoardArticleDTO(
                                 article.getId(),
@@ -202,7 +205,9 @@ public class BoardArticleController {
                                 article.getTrashDate() != null ? article.getTrashDate().toString() : "Unknown",
                                 article.getDeletedBy(),
                                 article.getStatus(),
-                                isImportant // isImportant 필드 추가
+                                isImportant, // isImportant 필드 추가
+                                mustRead
+
                         );
                     })
                     .collect(Collectors.toList());
@@ -264,6 +269,12 @@ public class BoardArticleController {
         // status가 'active'인 글만 필터링
         List<BoardArticleDTO> activeArticles = allArticles.stream()
                 .filter(article -> "active".equals(article.getStatus()))
+                .sorted(Comparator
+                        // 필독 여부를 기준으로 먼저 정렬 (true가 위로 오게)
+                        .comparing(BoardArticleDTO::getMustRead, Comparator.reverseOrder())
+                        // 이후 날짜를 기준으로 정렬 (내림차순, 최근 날짜부터)
+                        .thenComparing(article -> LocalDateTime.parse(article.getCreatedAt()), Comparator.reverseOrder())
+                )
                 .collect(Collectors.toList());
 
         // boardId로 boardName 조회

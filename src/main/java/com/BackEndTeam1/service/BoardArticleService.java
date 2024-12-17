@@ -61,6 +61,10 @@ public class BoardArticleService {
         boardArticle.setCreatedAt(LocalDateTime.now());
         boardArticle.setUpdatedAt(LocalDateTime.now());
 
+        // 필독 여부 설정
+        boardArticle.setMustRead(boardArticleDTO.getMustRead() != null ? boardArticleDTO.getMustRead() : false);
+        boardArticle.setNotification(boardArticleDTO.getNotification() != null ? boardArticleDTO.getNotification() : false);
+
         // 저장
         BoardArticle savedBoardArticle = boardArticleRepository.save(boardArticle);
 
@@ -125,6 +129,8 @@ public class BoardArticleService {
                             .map(ImportantArticle::getIsImportant)
                             .orElse(false); // 기본값 false
 
+                    Boolean mustRead = article.getMustRead() != null ? article.getMustRead() : false;
+
                     // DTO 생성
                     return new BoardArticleDTO(
                             article.getId(),
@@ -138,7 +144,8 @@ public class BoardArticleService {
                             String.valueOf(article.getTrashDate() != null ? article.getTrashDate() : "Unknown"),
                             article.getDeletedBy(),
                             article.getStatus(),
-                            isImportant // isImportant 추가
+                            isImportant, // isImportant 추가
+                            mustRead
                     );
                 })
                 .collect(Collectors.toList());
@@ -184,6 +191,8 @@ public class BoardArticleService {
                             .map(ImportantArticle::getIsImportant)
                             .orElse(false); // 기본값 false
 
+                    Boolean mustRead = article.getMustRead() != null ? article.getMustRead() : false;
+
                     // DTO 생성
                     return new BoardArticleDTO(
                             article.getId(),
@@ -197,7 +206,8 @@ public class BoardArticleService {
                             article.getTrashDate() != null ? article.getTrashDate().toString() : null,
                             article.getDeletedBy(),
                             article.getStatus(),
-                            isImportant // isImportant 필드 추가
+                            isImportant, // isImportant 필드 추가
+                            mustRead
                     );
                 })
                 .collect(Collectors.toList());

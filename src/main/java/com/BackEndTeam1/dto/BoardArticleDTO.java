@@ -28,10 +28,13 @@ public class BoardArticleDTO {
     private Boolean isImportant;
     private List<BoardFileDTO> files;
 
+    private Boolean mustRead;
+    private Boolean notification;
+
 
     private List<Long> ids;
 
-    public BoardArticleDTO(Long id, String title, String content, String boardName, String createdAt, String updatedAt, String userName, String userId, String trashDate, User deletedBy, String status, Boolean isImportant) {
+    public BoardArticleDTO(Long id, String title, String content, String boardName, String createdAt, String updatedAt, String userName, String userId, String trashDate, User deletedBy, String status, Boolean isImportant, Boolean mustRead) {
         this.id = Math.toIntExact(id);
         this.title = title;
         this.content = content;
@@ -44,6 +47,7 @@ public class BoardArticleDTO {
         this.deletedBy = deletedBy != null ? deletedBy.getUsername() : "Unknown"; // 적절히 변환
         this.status = status != null ? status : "active";
         this.isImportant = isImportant != null ? isImportant : true;
+        this.mustRead = mustRead != null ? mustRead : true;
     }
 
 }
