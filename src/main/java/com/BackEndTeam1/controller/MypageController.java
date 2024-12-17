@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.Optional;
 
 @Log4j2
@@ -29,28 +30,37 @@ public class MypageController {
     public ResponseEntity<String> savePlanHistory(@RequestBody PlanHistoryDTO planHistoryDTO) {
         log.info("Received PlanHistoryDTO: " + planHistoryDTO);
 
-//        // planId와 userId가 null인지 체크
-//        if (planHistoryDTO.getPlanId() == null || planHistoryDTO.getUserId() == null) {
-//            log.error("Plan ID or User ID is null.");
-//            return ResponseEntity.badRequest().body("Plan ID and User ID must not be null.");
-//        }
+        LocalDate startDate = planHistoryDTO.getStartDate();
+        LocalDate endDate = planHistoryDTO.getEndDate();
+
+        log.info("Start Date: " + startDate);
+        log.info("End Date: " + endDate);
+
+        // 나머지 로직 처리
+
+
+        // planId와 userId가 null인지 체크
+        if (planHistoryDTO.getPlanId() == null || planHistoryDTO.getUserId() == null) {
+            log.error("Plan ID or User ID is null.");
+            return ResponseEntity.badRequest().body("Plan ID and User ID must not be null.");
+        }
 
         // Plan과 User 객체를 ID로부터 조회
-//        Optional<Plan> planOptional = planRepository.findById(planHistoryDTO.getPlanId());
+        Optional<Plan> planOptional = planRepository.findById(planHistoryDTO.getPlanId());
         Optional<User> userOptional = userRepository.findById(String.valueOf(planHistoryDTO.getUserId()));
 
-//        if (planOptional.isEmpty() || userOptional.isEmpty()) {
-//            log.error("Plan or User not found for the given IDs.");
-//            return ResponseEntity.badRequest().body("Invalid plan or user ID.");
-//        }
-//
-//        Plan plan = planOptional.get();
+        if (planOptional.isEmpty() || userOptional.isEmpty()) {
+            log.error("Plan or User not found for the given IDs.");
+            return ResponseEntity.badRequest().body("Invalid plan or user ID.");
+        }
+
+        Plan plan = planOptional.get();
         User user = userOptional.get();
 
         // PlanHistory 객체 생성
         PlanHistory planHistory = PlanHistory.builder()
                 .user(user)
-//                .plan(plan)
+                .plan(plan)
                 .startDate(planHistoryDTO.getStartDate())
                 .endDate(planHistoryDTO.getEndDate())
                 .createdAt(new Timestamp(System.currentTimeMillis()))
@@ -66,5 +76,4 @@ public class MypageController {
 
         return ResponseEntity.ok("Plan history saved successfully!");
     }
-
 }
