@@ -21,8 +21,8 @@ public class Comment {
     private Integer commentId;
 
     @ManyToOne
-    @JoinColumn(name = "post_id")
-    private Post post;
+    @JoinColumn(name = "article_id")
+    private BoardArticle boardArticle;
 
     @ManyToOne
     @JoinColumn(name = "created_user_id")
