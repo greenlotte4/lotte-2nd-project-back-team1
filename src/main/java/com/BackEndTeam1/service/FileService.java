@@ -1,5 +1,6 @@
 package com.BackEndTeam1.service;
 
+import com.BackEndTeam1.entity.DriveFile;
 import com.BackEndTeam1.entity.User;
 import com.BackEndTeam1.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,13 +29,10 @@ public class FileService {
     public String uploadProfileImage(String userId, MultipartFile file) throws IOException {
 // 파일명 생성 (UUID를 사용하여 고유한 파일 이름을 생성)
         String fileName = UUID.randomUUID().toString() + "-" + file.getOriginalFilename();
-
         // 파일 저장 위치 설정
         Path targetLocation = Paths.get(uploadDir, fileName);
-
         // 파일을 지정된 위치에 저장
         Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-
         // 파일의 다운로드 URL 생성
         String baseUrl = "https://hubflow.store/user/thumb/";
 
@@ -47,6 +45,22 @@ public class FileService {
         userRepository.save(user);  // 변경된 사용자 정보 저장
 
         return fileDownloadUri;
+    }
 
+    public String uploadFiles(String userId, MultipartFile file) throws IOException {
+        String fileName = UUID.randomUUID().toString() + "-" + file.getOriginalFilename();
+        // 파일 저장 위치 설정
+        Path targetLocation = Paths.get(uploadDir, fileName);
+        // 파일을 지정된 위치에 저장
+        Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+        // 파일의 다운로드 URL 생성
+        String baseUrl = "https://hubflow.store/user/thumb/";
+
+        String filesURL = "/user/thumb/" + fileName;
+        String uploadFiles = baseUrl + fileName;
+
+//        DriveFile driveFile = ();
+
+        return filesURL;
     }
 }

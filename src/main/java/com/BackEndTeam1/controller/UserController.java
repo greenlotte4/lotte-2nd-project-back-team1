@@ -5,6 +5,8 @@ import com.BackEndTeam1.entity.Plan;
 import com.BackEndTeam1.entity.User;
 import com.BackEndTeam1.jwt.JwtProvider;
 import com.BackEndTeam1.security.MyUserDetails;
+import com.BackEndTeam1.service.DriveFileService;
+import com.BackEndTeam1.service.DriveService;
 import com.BackEndTeam1.service.FileService;
 import com.BackEndTeam1.service.UserService;
 import com.BackEndTeam1.util.CustomFileUtil;
@@ -41,6 +43,8 @@ public class UserController {
     private final JwtProvider jwtProvider;
     private final FileService fileService;
     private final CustomFileUtil customFileUtil;
+    private final DriveFileService driveFileService;
+    private final DriveService driveService;
 
 
     // 회원가입
@@ -83,7 +87,9 @@ public class UserController {
             String refreshToken = jwtProvider.createToken(user, 7);
             log.info("accessToken : " + accessToken);
 
+            String profile = userService.findProfileUrl(user.getUserId());
             // 리프레쉬 토큰 DB저장
+            driveService.initializeDrivesForUser();
 
             // 토큰 전송
             Map<String, Object> resultMap = new HashMap<>();
@@ -93,6 +99,7 @@ public class UserController {
             resultMap.put("email", user.getEmail());
             resultMap.put("accessToken", accessToken);
             resultMap.put("refreshToken", refreshToken);
+            resultMap.put("profile", profile);  // 프로필 URL 추가
 
             if (status.equals("BANED")) {
                 log.info("벤");
@@ -253,4 +260,8 @@ public class UserController {
         log.info("유저 상태 조회요청: " + userId);
         return ResponseEntity.status(HttpStatus.OK).body(userService.selectStatus(userId));
     }
+
+
+
+
 }

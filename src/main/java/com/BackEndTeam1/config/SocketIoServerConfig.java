@@ -14,7 +14,7 @@ public class SocketIoServerConfig {
         config.setHostname("your-server-ip.com");  // 또는 'localhost' 또는 '192.168.1.100'
 
         config.setHostname("localhost");
-        config.setPort(8080); // 서버가 사용할 포트
+        config.setPort(8081); // 서버가 사용할 포트
 
         SocketIOServer server = new SocketIOServer(config);
         return server;

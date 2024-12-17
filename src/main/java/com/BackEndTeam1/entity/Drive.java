@@ -37,4 +37,17 @@ public class Drive {
 
     @Column(name = "updated_at")
     private Timestamp updatedAt;
+
+
+    // 추가된 필드: 내 드라이브인지, 공유 드라이브인지 구분하는 필드
+    @Enumerated(EnumType.STRING)
+    @Column(name = "drive_type")
+    private DriveType driveType;
+
+
+    // 드라이브 종류 Enum
+    public enum DriveType {
+        PERSONAL, // 내 드라이브
+        SHARED   // 공유 드라이브
+    }
 }

@@ -1,8 +1,13 @@
 package com.BackEndTeam1.service;
 
+import com.BackEndTeam1.entity.Drive;
 import com.BackEndTeam1.entity.DriveFile;
+import com.BackEndTeam1.entity.Folder;
 import com.BackEndTeam1.repository.DriveFileRepository;
+import com.BackEndTeam1.repository.DriveRepository;
+import com.BackEndTeam1.repository.FolderRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,11 +25,15 @@ import java.util.Optional;
     00.00  000 - 00000
 */
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DriveFileService {
 
     private final DriveFileRepository driveFileRepository;
+    private final DriveRepository driveRepository;
+    private final FolderRepository folderRepository;
+
 
     // 파일 업로드 /1/1/das/file.pdf
     public DriveFile uploadFile(MultipartFile file, Integer driveId, Integer folderId, Integer userId) {
@@ -74,5 +83,33 @@ public class DriveFileService {
     // 저장 파일명 생성 (중복 방지를 위해 UUID 사용 가능)
     private String generateStoredFileName(String originalName) {
         return System.currentTimeMillis() + "_" + originalName;
+    }
+
+
+    // 폴더생성
+    public Folder createFolder( String userId, String folderName, boolean isShared) {
+        log.info("폴더이름" + folderName);
+        log.info("드라이브타입" + isShared);
+        log.info("아이디" + userId);
+        // 드라이브 타입 설정 (공유/개인)
+        Drive.DriveType driveType = isShared ? Drive.DriveType.SHARED : Drive.DriveType.PERSONAL;
+
+        // 드라이브 찾기 (유저의 드라이브 타입에 맞는 드라이브를 찾음)
+        Drive drive = driveRepository.findByDriveTypeAndUser_UserId(driveType, userId)
+                .orElseThrow(() -> new RuntimeException("사용자의 드라이브를 찾을 수 없습니다. userId: " + userId + ", driveType: " + driveType));
+
+        // 폴더 객체 생성
+        Folder folder = Folder.builder()
+                .drive(drive)  // 해당 드라이브에 폴더 연결
+                .name(folderName)  // 폴더 이름 설정
+                .createdAt(new Timestamp(System.currentTimeMillis()))  // 생성 시간
+                .updatedAt(new Timestamp(System.currentTimeMillis()))  // 업데이트 시간
+                .createdUser(drive.getUser())
+                .isDeleted(false)  // 삭제 여부
+                .isShared(isShared)
+                .build();
+
+        // 폴더 저장
+        return folderRepository.save(folder);  // 폴더를 DB에 저장
     }
 }
