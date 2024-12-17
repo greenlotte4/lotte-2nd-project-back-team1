@@ -34,7 +34,7 @@ public class BoardArticleDTO {
 
     private List<Long> ids;
 
-    public BoardArticleDTO(Long id, String title, String content, String boardName, String createdAt, String updatedAt, String userName, String userId, String trashDate, User deletedBy, String status, Boolean isImportant, Boolean mustRead) {
+    public BoardArticleDTO(Long id, String title, String content, String boardName, String createdAt, String updatedAt, String userName, String userId, String trashDate, User deletedBy, String status, Boolean isImportant, Boolean mustRead, Boolean notification) {
         this.id = Math.toIntExact(id);
         this.title = title;
         this.content = content;
@@ -48,6 +48,7 @@ public class BoardArticleDTO {
         this.status = status != null ? status : "active";
         this.isImportant = isImportant != null ? isImportant : true;
         this.mustRead = mustRead != null ? mustRead : true;
+        this.notification = notification != null ? notification : true;
     }
 
 }
