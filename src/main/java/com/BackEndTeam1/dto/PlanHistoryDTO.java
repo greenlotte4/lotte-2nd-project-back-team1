@@ -16,7 +16,7 @@ import java.time.LocalDate;
 public class PlanHistoryDTO {
     private Long planHistoryId;
     private User user;
-    private Long userId;  // User의 ID
+    private String userId;  // User의 ID
     private Plan plan;
     private Long planId;  // Plan의 ID
     private LocalDate startDate;
