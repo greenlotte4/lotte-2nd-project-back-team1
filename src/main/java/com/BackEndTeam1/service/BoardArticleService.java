@@ -34,6 +34,7 @@ public class BoardArticleService {
     private final BoardRepository boardRepository;
     private final ImportantArticleRepository importantArticleRepository;
     private final com.BackEndTeam1.repository.boardFileRepository boardFileRepository;
+    private final CommentRepository commentRepository;
 
     public int save(BoardArticleDTO boardArticleDTO) {
         log.info("Saving BoardArticle: {}", boardArticleDTO);
@@ -171,6 +172,10 @@ public class BoardArticleService {
                     throw new RuntimeException("파일 삭제 중 오류 발생", e);
                 }
             }
+
+            // 2. 게시물 ID로 댓글 삭제
+            commentRepository.deleteByBoardArticle_Id(articleId);
+            log.info("댓글 삭제 완료: 게시물 ID = " + articleId);
 
             // 3. 게시물 삭제
             boardArticleRepository.deleteById(Math.toIntExact(articleId));
