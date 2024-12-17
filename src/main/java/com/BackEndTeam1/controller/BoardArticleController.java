@@ -58,16 +58,24 @@ public class BoardArticleController {
     @PostMapping("/write")
     public ResponseEntity<?> write(
             @RequestPart("boardArticleDTO") BoardArticleDTO boardArticleDTO,
-            @RequestPart("files") List<MultipartFile> files) {
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
         try {
             log.info("Received BoardArticleDTO: " + boardArticleDTO);
-            log.info("Received files: " + files.size() + " files");
+
+            // 파일이 있을 경우 로그 출력
+            if (files != null && !files.isEmpty()) {
+                log.info("Received files: " + files.size() + " files");
+            } else {
+                log.info("No files received.");
+            }
 
             // 게시글 저장
             int articleId = boardArticleService.save(boardArticleDTO);
 
-            // 파일 저장
-            boardArticleService.saveFiles(articleId, files);
+            // 파일이 있을 경우에만 저장
+            if (files != null && !files.isEmpty()) {
+                boardArticleService.saveFiles(articleId, files);
+            }
 
             // 응답으로 게시글 ID 반환
             return ResponseEntity.ok(articleId);
@@ -191,6 +199,7 @@ public class BoardArticleController {
                                 .orElse(false); // 기본값 false
 
                         Boolean mustRead = article.getMustRead() != null ? article.getMustRead() : false;
+                        Boolean notification = article.getNotification() != null ? article.getNotification() : false;
 
                         // DTO 생성
                         return new BoardArticleDTO(
@@ -206,7 +215,8 @@ public class BoardArticleController {
                                 article.getDeletedBy(),
                                 article.getStatus(),
                                 isImportant, // isImportant 필드 추가
-                                mustRead
+                                mustRead,
+                                notification
 
                         );
                     })

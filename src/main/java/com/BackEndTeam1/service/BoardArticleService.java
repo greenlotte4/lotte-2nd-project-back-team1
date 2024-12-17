@@ -130,6 +130,7 @@ public class BoardArticleService {
                             .orElse(false); // 기본값 false
 
                     Boolean mustRead = article.getMustRead() != null ? article.getMustRead() : false;
+                    Boolean notification = article.getNotification() !=null ? article.getNotification() : false;
 
                     // DTO 생성
                     return new BoardArticleDTO(
@@ -145,7 +146,8 @@ public class BoardArticleService {
                             article.getDeletedBy(),
                             article.getStatus(),
                             isImportant, // isImportant 추가
-                            mustRead
+                            mustRead,
+                            notification
                     );
                 })
                 .collect(Collectors.toList());
@@ -192,6 +194,7 @@ public class BoardArticleService {
                             .orElse(false); // 기본값 false
 
                     Boolean mustRead = article.getMustRead() != null ? article.getMustRead() : false;
+                    Boolean notification = article.getNotification() !=null ? article.getNotification() : false;
 
                     // DTO 생성
                     return new BoardArticleDTO(
@@ -207,7 +210,8 @@ public class BoardArticleService {
                             article.getDeletedBy(),
                             article.getStatus(),
                             isImportant, // isImportant 필드 추가
-                            mustRead
+                            mustRead,
+                            notification
                     );
                 })
                 .collect(Collectors.toList());
