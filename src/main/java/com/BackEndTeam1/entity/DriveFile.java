@@ -44,11 +44,13 @@ public class DriveFile {
     private String fileType;
 
     @Column(name = "is_deleted")
-    private Boolean isDeleted;
+    @Builder.Default
+    private Boolean isDeleted = false; // 삭제여부
 
     @Column(name = "created_at")
     private Timestamp createdAt;
 
     @Column(name = "updated_at")
     private Timestamp updatedAt;
+
 }

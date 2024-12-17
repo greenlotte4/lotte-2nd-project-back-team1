@@ -40,4 +40,6 @@ public class Folder {
 
     @Column(name = "updated_at")
     private Timestamp updatedAt;
+
+    private boolean isShared;
 }
