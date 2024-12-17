@@ -1,24 +1,26 @@
 package com.BackEndTeam1.service;
 
 import com.BackEndTeam1.dto.BoardArticleDTO;
-import com.BackEndTeam1.entity.Board;
-import com.BackEndTeam1.entity.BoardArticle;
-import com.BackEndTeam1.entity.ImportantArticle;
-import com.BackEndTeam1.entity.User;
-import com.BackEndTeam1.repository.BoardArticleRepository;
-import com.BackEndTeam1.repository.BoardRepository;
-import com.BackEndTeam1.repository.ImportantArticleRepository;
-import com.BackEndTeam1.repository.UserRepository;
+import com.BackEndTeam1.entity.*;
+import com.BackEndTeam1.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Log4j2
@@ -31,6 +33,7 @@ public class BoardArticleService {
     private final UserRepository userRepository;
     private final BoardRepository boardRepository;
     private final ImportantArticleRepository importantArticleRepository;
+    private final com.BackEndTeam1.repository.boardFileRepository boardFileRepository;
 
     public int save(BoardArticleDTO boardArticleDTO) {
         log.info("Saving BoardArticle: {}", boardArticleDTO);
@@ -64,6 +67,55 @@ public class BoardArticleService {
         return Math.toIntExact(savedBoardArticle.getId());
     }
 
+    public void saveFiles(int articleId, List<MultipartFile> files) {
+
+        // 저장 경로 설정: upload/board
+        Path uploadDir = Paths.get("upload", "board");
+
+        try {
+            // 경로가 존재하지 않으면 생성
+            if (!Files.exists(uploadDir)) {
+                Files.createDirectories(uploadDir); // 폴더 생성
+                log.info("파일 저장 경로 생성: " + uploadDir.toAbsolutePath());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("파일 저장 경로를 생성하는 중 오류가 발생했습니다.", e);
+        }
+
+        // `articleId`로 `Post` 객체 조회
+        BoardArticle boardArticle = boardArticleRepository.findById(articleId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 ID의 게시글을 찾을 수 없습니다. ID: " + articleId));
+
+        // 파일 저장 반복
+        for (MultipartFile file : files) {
+            try {
+                // 저장할 파일명 생성 (랜덤 UUID + 원본 파일명)
+                String storedFileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+
+                // 파일 저장 경로: upload/board/{storedFileName}
+                Path filePath = uploadDir.resolve(storedFileName);
+                Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                // 파일 메타데이터 저장
+                BoardFile boardFile = BoardFile.builder()
+                        .boardArticle(boardArticle) // `BoardArticle` 객체 설정
+                        .fileOriginalName(file.getOriginalFilename()) // 원본 파일명
+                        .fileStoredName(storedFileName) // 저장된 파일명
+                        .fileSize((int) file.getSize()) // 파일 크기
+                        .fileType(file.getContentType()) // 파일 타입
+                        .createdAt(new Timestamp(System.currentTimeMillis()))
+                        .build();
+
+                // 데이터베이스에 파일 메타데이터 저장
+                boardFileRepository.save(boardFile);
+
+                log.info("파일 저장 완료: " + filePath.toAbsolutePath());
+            } catch (IOException e) {
+                throw new RuntimeException("파일 저장 중 오류 발생", e);
+            }
+        }
+    }
+
     public List<BoardArticleDTO> getAllBoardArticles() {
         return boardArticleRepository.findAll().stream()
                 .map(article -> {
@@ -93,12 +145,28 @@ public class BoardArticleService {
     }
 
     @Transactional
-    public void deleteArticles(List<Long> ids) {
-        if (ids == null || ids.isEmpty()) {
-            throw new IllegalArgumentException("삭제할 게시글 ID가 없습니다.");
+    public void deleteArticles(List<Long> idList) {
+        for (Long articleId : idList) {
+            // 1. 게시물 ID로 파일 목록 조회
+            List<BoardFile> files = boardFileRepository.findByBoardArticleId(articleId);
+
+            // 2. 파일 삭제 처리
+            for (BoardFile file : files) {
+                try {
+                    Path filePath = Paths.get("uploads", file.getFileStoredName());
+                    Files.deleteIfExists(filePath); // 파일이 존재하면 삭제
+                    boardFileRepository.delete(file); // 파일 메타데이터 삭제
+                    log.info("파일 삭제 완료: " + file.getFileStoredName());
+                } catch (IOException e) {
+                    log.error("파일 삭제 중 오류 발생: " + file.getFileStoredName(), e);
+                    throw new RuntimeException("파일 삭제 중 오류 발생", e);
+                }
+            }
+
+            // 3. 게시물 삭제
+            boardArticleRepository.deleteById(Math.toIntExact(articleId));
+            log.info("게시물 삭제 완료: " + articleId);
         }
-        // 휴지통에 있는 해당 ID들의 게시글 삭제
-        boardArticleRepository.deleteAllByIdIn(ids);
     }
 
     public List<BoardArticleDTO> getArticlesByBoard(Long boardId) {

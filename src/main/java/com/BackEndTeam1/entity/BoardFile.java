@@ -26,8 +26,8 @@ public class BoardFile {
     private Board board;
 
     @ManyToOne
-    @JoinColumn(name = "post_id")
-    private Post post;
+    @JoinColumn(name = "article_id")
+    private BoardArticle boardArticle;
 
     @ManyToOne
     @JoinColumn(name = "created_user_id")

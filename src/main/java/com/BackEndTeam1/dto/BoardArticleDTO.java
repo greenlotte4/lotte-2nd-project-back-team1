@@ -26,6 +26,8 @@ public class BoardArticleDTO {
     private String deletedBy;
     private String status = "active";
     private Boolean isImportant;
+    private List<BoardFileDTO> files;
+
 
     private List<Long> ids;
 
