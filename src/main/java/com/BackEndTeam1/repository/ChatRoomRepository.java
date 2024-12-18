@@ -14,4 +14,8 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Integer> {
     @Query("SELECT cr FROM ChatRoom cr WHERE cr.chat.chatId IN " +
             "(SELECT c.chat.chatId FROM ChatRoom c WHERE c.user.userId = :userId)")
     public List<ChatRoom> findByUserId(@Param("userId") String userId);
+
+
+    List<ChatRoom> findByChatChatId(Integer chatId);
+
 }
