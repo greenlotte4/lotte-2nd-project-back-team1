@@ -61,6 +61,13 @@ public class MessageController {
         return ResponseEntity.status(HttpStatus.OK).body(chatRoomList);
     }
 
+    @GetMapping("/room")
+    public ResponseEntity getRoom(@RequestParam Integer chatId) {
+        List<ChatRoomDTO> chatRoomList = messageService.findByChatId(chatId);
+        log.info("getRoom 호출되었음" + chatRoomList);
+        return ResponseEntity.status(HttpStatus.OK).body(chatRoomList);
+    }
+
     @GetMapping("/chat")
     public ResponseEntity getChat(@RequestParam int roomId) {
         List<ChatTextDTO> chatList = chatTextService.findByRoomId(roomId);
