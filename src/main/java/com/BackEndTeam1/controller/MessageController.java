@@ -3,16 +3,20 @@ package com.BackEndTeam1.controller;
 import com.BackEndTeam1.document.ChatTextDocument;
 import com.BackEndTeam1.dto.*;
 import com.BackEndTeam1.entity.ChatRoom;
+import com.BackEndTeam1.service.FileService;
 import com.BackEndTeam1.service.MessageService;
 import com.BackEndTeam1.service.UserService;
 import com.BackEndTeam1.service.mongo.ChatTextService;
+import com.BackEndTeam1.util.CustomFileUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,6 +29,10 @@ public class MessageController {
     private final MessageService messageService;
     private final ChatTextService chatTextService;
     private final UserService userService;
+
+    private final CustomFileUtil customFileUtil;
+
+    private final FileService fileService;
     @PostMapping("/newChannel")
     public ResponseEntity newChannel(@RequestBody ChatRequestDTO chatRequestDTO) {
         log.info("채널 추가 : " + chatRequestDTO);
@@ -105,5 +113,25 @@ public class MessageController {
         String lastChat = chatTextService.getLastChat(roomId);
         log.info(lastChat);
         return ResponseEntity.status(HttpStatus.OK).body(lastChat);
+    }
+
+    @PostMapping("/upload")
+    public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file) {
+        log.info("Uploading file");
+        try {
+            // 서비스 호출
+            String fileDownloadUri = fileService.uploadMessageImage(file);
+            return ResponseEntity.status(HttpStatus.OK).body(fileDownloadUri); // 성공 시 이미지 URL 반환
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("업로드 실패: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/img/{fileName}")
+    public ResponseEntity<Resource> MessageImg(@PathVariable String fileName){
+
+        log.info(fileName);
+
+        return customFileUtil.getFile(fileName);
     }
 }
