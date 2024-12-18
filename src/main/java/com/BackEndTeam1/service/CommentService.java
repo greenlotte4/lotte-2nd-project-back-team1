@@ -23,7 +23,7 @@ public class CommentService {
     private final UserRepository userRepository;
 
     public void saveComment(CommentDTO requestDTO) {
-        BoardArticle article = boardArticleRepository.findById(requestDTO.getArticleId())
+        BoardArticle article = boardArticleRepository.findById(requestDTO.getCommentId())
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 존재하지 않습니다."));
 
         User user = userRepository.findById(requestDTO.getUserId())
