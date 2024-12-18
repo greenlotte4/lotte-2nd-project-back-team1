@@ -63,4 +63,21 @@ public class FileService {
 
         return filesURL;
     }
+
+    public String uploadMessageImage(MultipartFile file) throws IOException {
+// 파일명 생성 (UUID를 사용하여 고유한 파일 이름을 생성)
+        String fileName = UUID.randomUUID().toString() + "-" + file.getOriginalFilename();
+        // 파일 저장 위치 설정
+        Path targetLocation = Paths.get(uploadDir, fileName);
+        // 파일을 지정된 위치에 저장
+        Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+        // 파일의 다운로드 URL 생성
+        String baseUrl = "https://hubflow.store/message/img/";
+
+        String fileDownloadUri = "/message/img/" + fileName;
+        String saveProfile = baseUrl + fileName;
+
+
+        return fileDownloadUri;
+    }
 }
