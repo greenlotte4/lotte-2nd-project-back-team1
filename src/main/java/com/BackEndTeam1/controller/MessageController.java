@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -80,13 +81,17 @@ public class MessageController {
     public ResponseEntity saveChat(@RequestBody ChatTextDTO chatTextDTO) {
         ChatTextDTO savedChatTextDTO = chatTextService.insertChatText(chatTextDTO);
 
+
         if(savedChatTextDTO != null) {
+
+
             return ResponseEntity.ok().build();
         }
         else{
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
 
     @GetMapping("/lastchat")
     public ResponseEntity getLastChat(@RequestParam int roomId) {

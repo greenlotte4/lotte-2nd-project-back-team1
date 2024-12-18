@@ -67,6 +67,14 @@ dependencies {
     // socket
     implementation 'com.corundumstudio.socketio:netty-socketio:1.7.18'
 
+    // WebSocket
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+// STOMP
+    implementation 'org.webjars:stomp-websocket:2.3.4'
+
+// SockJS
+    implementation 'org.webjars:sockjs-client:1.5.1'
 }
 
 tasks.named('test') {
