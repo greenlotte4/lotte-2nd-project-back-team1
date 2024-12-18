@@ -13,7 +13,7 @@ import java.sql.Timestamp;
 public class CommentDTO {
 
     private String userId;
-    private Integer articleId;
+    private Integer commentId;
     private String content;
     private String createdAt;
 
@@ -22,6 +22,6 @@ public class CommentDTO {
         this.userId = username;
         this.content = content;
         this.createdAt = createdAt.toString();
-        this.articleId = commentId;
+        this.commentId = commentId;
     }
 }
