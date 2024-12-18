@@ -12,6 +12,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
@@ -121,7 +122,11 @@ public class ProjectService {
     
     //프로젝트 삭제 메서드
     public void deleteProject(Long projectId) {
-        projectRepository.deleteById(projectId);
+        try {
+            projectRepository.deleteById(projectId);
+        } catch (EmptyResultDataAccessException e) {
+            log.warn("No entity found with ID: {}", projectId);
+        }
     }
 
 

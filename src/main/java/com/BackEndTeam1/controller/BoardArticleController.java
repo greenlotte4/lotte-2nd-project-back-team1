@@ -1,8 +1,10 @@
 package com.BackEndTeam1.controller;
 
 import com.BackEndTeam1.dto.BoardArticleDTO;
+import com.BackEndTeam1.dto.BoardFileDTO;
 import com.BackEndTeam1.dto.MoveArticlesDTO;
 import com.BackEndTeam1.entity.BoardArticle;
+import com.BackEndTeam1.entity.BoardFile;
 import com.BackEndTeam1.entity.ImportantArticle;
 import com.BackEndTeam1.entity.User;
 import com.BackEndTeam1.repository.BoardArticleRepository;
@@ -10,15 +12,28 @@ import com.BackEndTeam1.repository.ImportantArticleRepository;
 import com.BackEndTeam1.repository.UserRepository;
 import com.BackEndTeam1.service.BoardArticleService;
 import com.BackEndTeam1.service.BoardService;
+import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -35,17 +50,35 @@ public class BoardArticleController {
     private final UserRepository userRepository;
     private final BoardService boardService;
     private final ImportantArticleRepository importantArticleRepository;
+    private final com.BackEndTeam1.repository.boardFileRepository boardFileRepository;
 
-    @PostMapping("write")
-    public ResponseEntity<?> write(@RequestBody BoardArticleDTO boardArticleDTO) {
+    @Value("${file.upload.path}") // yml 설정값 가져오기
+    private String uploadBasePath;
+
+    @PostMapping("/write")
+    public ResponseEntity<?> write(
+            @RequestPart("boardArticleDTO") BoardArticleDTO boardArticleDTO,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
         try {
-            log.info(boardArticleDTO.toString());
+            log.info("Received BoardArticleDTO: " + boardArticleDTO);
 
-            // 저장 로직 처리
-            int id = boardArticleService.save(boardArticleDTO);
+            // 파일이 있을 경우 로그 출력
+            if (files != null && !files.isEmpty()) {
+                log.info("Received files: " + files.size() + " files");
+            } else {
+                log.info("No files received.");
+            }
+
+            // 게시글 저장
+            int articleId = boardArticleService.save(boardArticleDTO);
+
+            // 파일이 있을 경우에만 저장
+            if (files != null && !files.isEmpty()) {
+                boardArticleService.saveFiles(articleId, files);
+            }
 
             // 응답으로 게시글 ID 반환
-            return ResponseEntity.ok(id);
+            return ResponseEntity.ok(articleId);
         } catch (Exception e) {
             log.error("게시글 등록 중 오류 발생: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("게시글 등록에 실패했습니다.");
@@ -60,36 +93,59 @@ public class BoardArticleController {
     @GetMapping("/view/detail")
     public ResponseEntity<BoardArticleDTO> getArticle(@RequestParam Long id) {
         // 게시글 조회
-        Optional<BoardArticle> articleOptional = boardArticleRepository.findById(Math.toIntExact(id));
-        if (!articleOptional.isPresent()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다.");
-        }
-
-        BoardArticle article = articleOptional.get();
+        BoardArticle article = boardArticleRepository.findById(Math.toIntExact(id))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
 
         // DTO로 매핑
-        BoardArticleDTO articleDTO = modelMapper.map(article, BoardArticleDTO.class);
+        BoardArticleDTO articleDTO = new BoardArticleDTO();
+
+        articleDTO.setId(Math.toIntExact(article.getId()));
+        articleDTO.setTitle(article.getTitle());
+        articleDTO.setContent(article.getContent());
+        articleDTO.setCreatedAt(String.valueOf(article.getCreatedAt()));
+        articleDTO.setUpdatedAt(String.valueOf(article.getUpdatedAt()));
+        articleDTO.setMustRead(article.getMustRead());
 
         // 작성자 정보 설정
         if (article.getAuthor() != null) {
-            articleDTO.setUserName(article.getAuthor().getUsername()); // 작성자 이름 설정
-            articleDTO.setUserId(article.getAuthor().getUserId()); // 작성자 ID 설정
+            articleDTO.setUserName(article.getAuthor().getUsername());
+            articleDTO.setUserId(article.getAuthor().getUserId());
         } else {
             articleDTO.setUserName("알 수 없음");
             articleDTO.setUserId(null);
         }
 
+        // 게시판 정보 설정
         if (article.getBoard() != null) {
-            articleDTO.setBoardName(article.getBoard().getBoardName()); // boardName 설정
+            articleDTO.setBoardName(article.getBoard().getBoardName());
         } else {
             articleDTO.setBoardName("알 수 없음");
         }
 
-        Optional<ImportantArticle> importantArticle = importantArticleRepository.findByUser_UserIdAndArticleId(
-                article.getAuthor().getUserId(),
-                article.getId()
-        );
-        articleDTO.setIsImportant(importantArticle.map(ImportantArticle::getIsImportant).orElse(false));
+        // 중요 게시글 설정
+        if (article.getAuthor() != null) {
+            Optional<ImportantArticle> importantArticle = importantArticleRepository.findByUser_UserIdAndArticleId(
+                    article.getAuthor().getUserId(),
+                    article.getId()
+            );
+            articleDTO.setIsImportant(importantArticle.map(ImportantArticle::getIsImportant).orElse(false));
+        } else {
+            articleDTO.setIsImportant(false);
+        }
+
+        // 파일 정보 추가
+        List<BoardFileDTO> fileDTOs = article.getFiles() != null ? article.getFiles().stream().map(file -> {
+            BoardFileDTO boardFileDTO = new BoardFileDTO();
+            boardFileDTO.setBoardFileId(file.getBoardFileId());
+            boardFileDTO.setFileOriginalName(file.getFileOriginalName());
+            boardFileDTO.setFileStoredName(file.getFileStoredName());
+            boardFileDTO.setFileSize(file.getFileSize());
+            boardFileDTO.setFileType(file.getFileType());
+            boardFileDTO.setCreatedAt(String.valueOf(file.getCreatedAt()));
+            boardFileDTO.setUpdatedAt(String.valueOf(file.getUpdatedAt()));
+            return boardFileDTO;
+        }).collect(Collectors.toList()) : Collections.emptyList();
+        articleDTO.setFiles(fileDTOs);
 
         return ResponseEntity.ok(articleDTO);
     }
@@ -142,6 +198,9 @@ public class BoardArticleController {
                                 .map(ImportantArticle::getIsImportant)
                                 .orElse(false); // 기본값 false
 
+                        Boolean mustRead = article.getMustRead() != null ? article.getMustRead() : false;
+                        Boolean notification = article.getNotification() != null ? article.getNotification() : false;
+
                         // DTO 생성
                         return new BoardArticleDTO(
                                 article.getId(),
@@ -155,7 +214,10 @@ public class BoardArticleController {
                                 article.getTrashDate() != null ? article.getTrashDate().toString() : "Unknown",
                                 article.getDeletedBy(),
                                 article.getStatus(),
-                                isImportant // isImportant 필드 추가
+                                isImportant, // isImportant 필드 추가
+                                mustRead,
+                                notification
+
                         );
                     })
                     .collect(Collectors.toList());
@@ -217,6 +279,12 @@ public class BoardArticleController {
         // status가 'active'인 글만 필터링
         List<BoardArticleDTO> activeArticles = allArticles.stream()
                 .filter(article -> "active".equals(article.getStatus()))
+                .sorted(Comparator
+                        // 필독 여부를 기준으로 먼저 정렬 (true가 위로 오게)
+                        .comparing(BoardArticleDTO::getMustRead, Comparator.reverseOrder())
+                        // 이후 날짜를 기준으로 정렬 (내림차순, 최근 날짜부터)
+                        .thenComparing(article -> LocalDateTime.parse(article.getCreatedAt()), Comparator.reverseOrder())
+                )
                 .collect(Collectors.toList());
 
         // boardId로 boardName 조회
@@ -252,4 +320,5 @@ public class BoardArticleController {
 
         return ResponseEntity.ok(articles);
     }
+
 }

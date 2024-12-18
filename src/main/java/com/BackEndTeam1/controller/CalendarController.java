@@ -43,6 +43,8 @@ public class CalendarController {
             return ResponseEntity.ok("캘린더 가입 성공");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류가 발생했습니다.");
         }
@@ -94,5 +96,21 @@ public class CalendarController {
         calendarEventService.addCalendarEvents(eventList);
         // 여기서 서비스 호출 로직 등 처리
         return ResponseEntity.ok("일정 추가 성공");
+    }
+    @PutMapping("/editevent")
+    public ResponseEntity<?> editevent(@RequestBody List<CalendarEventDTO> eventList) {
+        log.info("받은 수정 이벤트 리스트 사이즈: " + eventList.size());
+        for (CalendarEventDTO dto : eventList) {
+            log.info("이벤트: " + dto.toString());
+        }
+        calendarEventService.editCalendarEvents(eventList);
+        // 여기서 서비스 호출 로직 등 처리
+        return ResponseEntity.ok("일정 추가 성공");
+    }
+    @DeleteMapping("/deleteevent/{calendarEventId}")
+    public ResponseEntity<?> deleteEvent(@PathVariable("calendarEventId") Integer calendarEventId) {
+        log.info("calendarEventId : " + calendarEventId);
+        calendarEventService.deleteCalendarEvents(calendarEventId);
+        return ResponseEntity.ok("일정 삭제 성공");
     }
 }

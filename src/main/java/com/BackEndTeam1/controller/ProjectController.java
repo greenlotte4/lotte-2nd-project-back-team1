@@ -80,8 +80,15 @@ public class ProjectController {
     }
 
 
-    @DeleteMapping("/project/{no}")
-    public void DeleteProject(@PathVariable Long no) {
-        projectService.deleteProject(no);
+    @DeleteMapping("/project/delete/{id}")
+    public ResponseEntity<?> DeleteProject(@PathVariable("id") Long id) {
+        try {
+            log.info("Deleting project with ID: {}", id);
+            projectService.deleteProject(id);
+            return ResponseEntity.ok().build();
+        } catch (NumberFormatException e) {
+            log.warn("Invalid project ID: {}", id);
+            return ResponseEntity.badRequest().body("Invalid project ID: must be a number.");
+        }
     }
 }
