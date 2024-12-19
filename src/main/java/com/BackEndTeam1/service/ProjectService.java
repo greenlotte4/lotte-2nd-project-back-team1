@@ -1,13 +1,11 @@
 package com.BackEndTeam1.service;
 
 import com.BackEndTeam1.dto.*;
+import com.BackEndTeam1.entity.Plan;
 import com.BackEndTeam1.entity.Project;
 import com.BackEndTeam1.entity.ProjectUser;
 import com.BackEndTeam1.entity.User;
-import com.BackEndTeam1.repository.ProjectItemRepository;
-import com.BackEndTeam1.repository.ProjectRepository;
-import com.BackEndTeam1.repository.ProjectUserRepository;
-import com.BackEndTeam1.repository.UserRepository;
+import com.BackEndTeam1.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -32,6 +30,7 @@ public class ProjectService {
     private final ProjectUserRepository projectUserRepository;
     private final ModelMapper modelMapper;
     private final UserRepository userRepository;
+    private final PlanRepository planRepository;
 
     //선택된 프로젝트 전체 값 가져오가
     @Transactional
@@ -167,6 +166,31 @@ public class ProjectService {
     //참여된 프로젝트 가져오기
     public List<ProjectUser> findByUser(String userId) {
         return projectRepository.findAllProjectUser(userId);
+    }
+
+
+    public void validateProjectCreation(String userId) {
+        // 현재 사용자 정보 가져오기
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 사용자 플랜 확인
+        Plan plan = planRepository.findById(user.getPlan().getPlanId())
+                .orElseThrow(() -> new IllegalArgumentException("플랜 정보를 찾을 수 없습니다."));
+
+        // 생성한 프로젝트 개수 확인
+        int currentProjectCount = projectRepository.countByUserId(userId);
+
+        // 최대 프로젝트 개수 제한 확인
+        if (currentProjectCount >= plan.getMaxProject()) {
+            throw new IllegalStateException("현재 플랜에서 생성 가능한 프로젝트 수를 초과했습니다. " +
+                    "최대 생성 가능 수: " + plan.getMaxProject());
+        }
+    }
+
+    public Project createProject(Project project) {
+        validateProjectCreation(project.getUser().getUserId());
+        return projectRepository.save(project);
     }
 
 }

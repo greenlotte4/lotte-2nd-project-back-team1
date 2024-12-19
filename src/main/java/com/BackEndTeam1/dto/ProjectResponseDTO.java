@@ -9,11 +9,11 @@ import java.util.List;
 @ToString
 @NoArgsConstructor
 public class ProjectResponseDTO {
-    private List<ProjectDTO> inProjectList;
-    private List<ProjectDTO> loginUserProjectList;
+    private List<ProjectDTO> createdProjects;
+    private List<ProjectDTO> participatedProjects;
 
     public ProjectResponseDTO(List<ProjectDTO> inProjectList, List<ProjectDTO> loginUserProjectList) {
-        this.inProjectList = inProjectList;
-        this.loginUserProjectList = loginUserProjectList;
+        this.createdProjects = inProjectList;
+        this.participatedProjects = loginUserProjectList;
     }
 }

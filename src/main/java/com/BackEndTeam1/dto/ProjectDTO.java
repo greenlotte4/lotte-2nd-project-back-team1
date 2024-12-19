@@ -53,4 +53,9 @@ public class ProjectDTO {
         this.endDate = project.getEndDate();
         this.createdAt = getCreatedAt();
     }
+
+    public ProjectDTO(Long projectId, String name) {
+        this.projectId = projectId;
+        this.name = name;
+    }
 }

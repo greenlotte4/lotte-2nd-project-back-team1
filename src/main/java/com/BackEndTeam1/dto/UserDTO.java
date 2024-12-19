@@ -1,6 +1,8 @@
 package com.BackEndTeam1.dto;
 
 import com.BackEndTeam1.entity.Plan;
+import com.BackEndTeam1.entity.ProjectUser;
+import com.BackEndTeam1.entity.User;
 import lombok.*;
 
 import java.sql.Timestamp;
@@ -31,9 +33,22 @@ public class UserDTO {
     private String userStatus;
 
     private PlanHistoryDTO planHistory;
+    private ProjectUser projectUser;
 
     public UserDTO(String userId, String username) {
         this.userId = userId;
         this.username = username;
     }
+
+    public UserDTO(ProjectUser projectUser) {
+        if (projectUser.getUser() != null) { // Null 체크
+            System.out.println("ProjectUser's User ID: " + projectUser.getUser().getUserId());
+            System.out.println("ProjectUser's Username: " + projectUser.getUser().getUsername());
+            this.userId = projectUser.getUser().getUserId();
+            this.username = projectUser.getUser().getUsername();
+        } else {
+            System.out.println("ProjectUser's User is null!");
+        }
+    }
+
 }

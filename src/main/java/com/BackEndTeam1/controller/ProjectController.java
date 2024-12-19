@@ -3,13 +3,18 @@ package com.BackEndTeam1.controller;
 
 import com.BackEndTeam1.dto.ProjectDTO;
 import com.BackEndTeam1.dto.ProjectResponseDTO;
-import com.BackEndTeam1.dto.ProjectSelectDTO;
+import com.BackEndTeam1.dto.ProjectUserDTO;
+import com.BackEndTeam1.dto.UserDTO;
+import com.BackEndTeam1.entity.Plan;
 import com.BackEndTeam1.entity.Project;
-import com.BackEndTeam1.entity.ProjectItem;
+import com.BackEndTeam1.entity.ProjectUser;
 import com.BackEndTeam1.entity.User;
-import com.BackEndTeam1.service.ProjectItemService;
+import com.BackEndTeam1.repository.PlanRepository;
+import com.BackEndTeam1.repository.ProjectRepository;
+import com.BackEndTeam1.repository.UserRepository;
 import com.BackEndTeam1.service.ProjectService;
-import com.BackEndTeam1.service.TaskService;
+import com.BackEndTeam1.service.ProjectUserService;
+import com.BackEndTeam1.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.ResponseEntity;
@@ -27,16 +32,48 @@ import java.util.stream.Collectors;
 public class ProjectController {
 
     private final ProjectService projectService;
-
+    private final ProjectRepository projectRepository;
+    private final UserService userService;
+    private final UserRepository userRepository;
+    private final PlanRepository planRepository;
+    private final ProjectUserService projectUserService;
 
     @GetMapping("/project")
-    public ResponseEntity<List<ProjectDTO>> getUserProjects(@RequestParam String userId) {
+    public ResponseEntity<ProjectResponseDTO> getUserProjects(@RequestParam String userId) {
+        List<ProjectUser> projectUsers = projectRepository.findAllProjectUser(userId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        Plan plan = planRepository.findById(user.getPlan().getPlanId())
+                .orElseThrow(() -> new IllegalArgumentException("플랜 정보를 찾을 수 없습니다."));
+
         List<Project> userProjects = projectService.findByUserId(userId);
-        List<ProjectDTO> projectDTOs = userProjects.stream()
+
+        int maxProjects = plan.getPlanId() == 1 ? 3 :
+                plan.getPlanId() == 2 ? 10 :
+                        plan.getPlanId() == 3 ? 1000 : 0;
+
+        if (userProjects.size() > maxProjects) {
+            throw new IllegalStateException("현재 플랜에서 생성 가능한 최대 프로젝트 수를 초과했습니다. " +
+                    "최대 생성 가능 수: " + maxProjects);
+        }
+
+        List<ProjectDTO> createdProjects = userProjects.stream()
+                .limit(maxProjects)
                 .map(ProjectDTO::new)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(projectDTOs);
+        List<ProjectDTO> participatedProjects = projectUsers.stream()
+                .map(pu -> new ProjectDTO(pu.getProject().getProjectId(), pu.getProject().getName()))
+                .collect(Collectors.toList());
+        ProjectResponseDTO responseDTO = new ProjectResponseDTO();
+        responseDTO.setCreatedProjects(createdProjects);
+        responseDTO.setParticipatedProjects(participatedProjects);
+
+        return ResponseEntity.ok(responseDTO);
     }
+
+
 
 
     @PostMapping("/project/create")
@@ -92,4 +129,12 @@ public class ProjectController {
             return ResponseEntity.badRequest().body("Invalid project ID: must be a number.");
         }
     }
+
+    @GetMapping("/project/{projectId}/participants")
+    public ResponseEntity<List<UserDTO>> getProjectParticipants(@PathVariable Long projectId) {
+        List<UserDTO> participants = projectUserService.getParticipantsByProjectId(projectId);
+        return ResponseEntity.ok(participants); // JSON 응답
+    }
+
+
 }

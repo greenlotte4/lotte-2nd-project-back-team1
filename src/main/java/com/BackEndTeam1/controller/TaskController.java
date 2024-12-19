@@ -28,16 +28,15 @@ public class TaskController {
     @PutMapping("/update/{no}")
     public ResponseEntity<?> updateTask(@PathVariable Long no, @RequestBody TaskDTO taskDTO) {
         try {
-            // Task 업데이트 호출
             Task updatedTask = taskService.updateTask(no, taskDTO);
-
-            // 성공적으로 업데이트된 Task를 반환
             return ResponseEntity.ok(updatedTask);
-        } catch (Exception e) {
-            // 실패 시 오류 메시지와 상태 코드 반환
+        } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Task 업데이트 실패: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류: " + e.getMessage());
         }
     }
+
 
     @DeleteMapping("/delete/{no}")
     public void deleteTask(@PathVariable Long no){

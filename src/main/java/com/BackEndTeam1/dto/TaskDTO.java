@@ -35,4 +35,12 @@ public class TaskDTO {
         this.startDate = task.getStartDate();
         this.endDate = task.getEndDate();
     }
+
+    public TaskDTO(String name, Date startDate, Date endDate, Integer priority, String s) {
+        this.name = name;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.priority = priority;
+        this.status = s;
+    }
 }
