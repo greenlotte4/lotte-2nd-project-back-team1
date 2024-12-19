@@ -41,6 +41,5 @@ public class UserLoginService {
         status.setCurrentStatus(currentStatus);
         status.setLastUpdated(LocalDateTime.now());
         userLoginRepository.save(status);
-
     }
 }

@@ -16,4 +16,6 @@ public interface CalendarEventRepository extends JpaRepository<CalendarEvent, In
     @Transactional
     @Query("DELETE FROM CalendarEvent e WHERE e.calendar.calendarId = :calendarId")
     void deleteByCalendarId(@Param("calendarId") Integer calendarId);
+
+    List<CalendarEvent> findByCalendar_CalendarId(int i);
 }

@@ -8,11 +8,12 @@ import com.BackEndTeam1.repository.CalendarEventRepository;
 import com.BackEndTeam1.repository.CalendarRepository;
 import com.BackEndTeam1.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -20,6 +21,7 @@ public class CalendarEventService {
     private final CalendarEventRepository calendarEventRepository;
     private final CalendarRepository calendarRepository;
     private final UserRepository userRepository;
+    private final ModelMapper modelMapper;
     public void addCalendarEvents(List<CalendarEventDTO> eventList) {
         for (CalendarEventDTO dto : eventList) {
             Calendar calendar = calendarRepository.findById(Integer.valueOf(dto.getCalendarId()))
@@ -42,7 +44,6 @@ public class CalendarEventService {
                     .createdAt(new Timestamp(System.currentTimeMillis()))
                     .updatedAt(new Timestamp(System.currentTimeMillis()))
                     .build();
-
             calendarEventRepository.save(calendarEvent);
         }
     }
@@ -66,5 +67,16 @@ public class CalendarEventService {
 
     public void deleteCalendarEvents(Integer calendarEventId) {
         calendarEventRepository.deleteById(calendarEventId);
+    }
+
+    public List<CalendarEventDTO> getEventsByCalendarId(Integer calendarId) {
+        List<CalendarEvent> calendarEvents = calendarEventRepository.findByCalendar_CalendarId((calendarId));
+        return calendarEvents.stream()
+                .map(event -> {
+                    CalendarEventDTO dto = modelMapper.map(event, CalendarEventDTO.class);
+                    dto.setCalendarId((event.getCalendar().getCalendarId())); // `calendarId` 매핑
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 }
