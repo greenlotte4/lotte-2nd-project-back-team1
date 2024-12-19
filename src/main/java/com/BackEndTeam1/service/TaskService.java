@@ -11,6 +11,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -55,11 +56,18 @@ public class TaskService {
             existingTask.setEndDate(taskDTO.getEndDate());
         }
         if (taskDTO.getPriority() != null) {
-            existingTask.setPriority(taskDTO.getPriority()); // priority 값 설정
+            existingTask.setPriority(taskDTO.getPriority());
+        }
+        if (taskDTO.getAssignee() != null) {
+            // `User` 엔티티를 데이터베이스에서 조회하여 영속 상태로 만듦
+            User assignee = userRepository.findById(taskDTO.getAssignee())
+                    .orElseThrow(() -> new RuntimeException("User ID를 찾을 수 없습니다: " + taskDTO.getAssignee()));
+            existingTask.setAsignee(assignee.getUserId()); // 영속 상태의 `User` 설정
         }
 
         return taskRepository.save(existingTask);
     }
+
 
 
 
