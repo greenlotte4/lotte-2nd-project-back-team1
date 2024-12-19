@@ -2,18 +2,23 @@ package com.BackEndTeam1.controller;
 
 import com.BackEndTeam1.dto.UserDTO;
 import com.BackEndTeam1.entity.Plan;
+import com.BackEndTeam1.entity.TeamSpace;
+import com.BackEndTeam1.entity.TeamSpaceMember;
 import com.BackEndTeam1.entity.User;
 import com.BackEndTeam1.jwt.JwtProvider;
+import com.BackEndTeam1.repository.PlanRepository;
+import com.BackEndTeam1.repository.TeamSpaceMemberRepository;
+import com.BackEndTeam1.repository.TeamSpaceRepository;
 import com.BackEndTeam1.security.MyUserDetails;
 import com.BackEndTeam1.service.DriveFileService;
 import com.BackEndTeam1.service.DriveService;
 import com.BackEndTeam1.service.FileService;
 import com.BackEndTeam1.service.UserService;
+import com.BackEndTeam1.service.mongo.UserLoginService;
 import com.BackEndTeam1.util.CustomFileUtil;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,12 +30,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -43,6 +45,9 @@ public class UserController {
     private final JwtProvider jwtProvider;
     private final FileService fileService;
     private final CustomFileUtil customFileUtil;
+    private final TeamSpaceMemberRepository teamSpaceMemberRepository;
+    private final TeamSpaceRepository teamSpaceRepository;
+    private final UserLoginService userLoginService;
     private final DriveFileService driveFileService;
     private final DriveService driveService;
 
@@ -62,35 +67,55 @@ public class UserController {
 
     // 로그인
     @PostMapping("/login")
-    public ResponseEntity login(@RequestBody UserDTO userDTO) {
-        log.info("로그인 요청"+userDTO.getUserId());
+    public ResponseEntity<?> login(@RequestBody UserDTO userDTO) {
+        log.info("로그인 요청: " + userDTO.getUserId());
         try {
+            log.info("로그인 시도: " + userDTO.getUserId());
 
-            log.info("로그인 트라이"+userDTO.getUserId());
-
-            // 시큐리티 사용자 검증
-            UsernamePasswordAuthenticationToken token
-                    = new UsernamePasswordAuthenticationToken(userDTO.getUserId(), userDTO.getPass());
-
+            // 사용자 인증
+            UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userDTO.getUserId(), userDTO.getPass());
             Authentication authentication = authenticationManager.authenticate(token);
-            SecurityContextHolder.getContext().setAuthentication(authentication);  // 이 부분 추가
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
+            // 인증된 사용자 정보 가져오기
             MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
             User user = userDetails.getUser();
 
             String status = user.getStatus();
-
-            log.info("user : " + user);
+            log.info("user: " + user);
             userService.updateLastLoginTime(user.getUserId());
+
+            // 상태 검사
+            if ("BANED".equals(status)) {
+                log.info("벤됨");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("정지된 회원입니다");
+            } else if ("DELETED".equals(status)) {
+                log.info("탈퇴됨");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("탈퇴한 회원입니다.");
+            } else if ("SLEEP".equals(status)) {
+                log.info("휴면 계정");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("휴면 계정입니다.");
+            }
+
             // JWT 토큰 발행
             String accessToken = jwtProvider.createToken(user, 1);
             String refreshToken = jwtProvider.createToken(user, 7);
-            log.info("accessToken : " + accessToken);
+            log.info("accessToken 생성 완료");
 
+            // TeamSpaceMember 리스트 조회
+            List<TeamSpaceMember> teamSpaceMembers  = teamSpaceMemberRepository.findByUser_UserId(user.getUserId());
+            List<String> roomNames = teamSpaceMembers.stream()
+                    .map(TeamSpaceMember::getTeamSpace) // TeamSpace 추출
+                    .map(TeamSpace::getRoomname) // roomname 추출
+                    .collect(Collectors.toList()); // roomname 리스트 생성
+            List<Long> teamid = teamSpaceMembers.stream()
+                    .map(TeamSpaceMember::getTeamSpace) // TeamSpace 추출
+                    .map(TeamSpace::getTeamSpaceId) // roomname 추출
+                    .collect(Collectors.toList()); // roomname 리스트 생성
+            userLoginService.updateUserStatus(user.getUserId(), "online", roomNames,teamid, user.getProfile(), user.getUsername());
             String profile = userService.findProfileUrl(user.getUserId());
             // 리프레쉬 토큰 DB저장
             driveService.initializeDrivesForUser();
-
             // 토큰 전송
             Map<String, Object> resultMap = new HashMap<>();
             resultMap.put("username", user.getUsername());
@@ -99,21 +124,9 @@ public class UserController {
             resultMap.put("email", user.getEmail());
             resultMap.put("accessToken", accessToken);
             resultMap.put("refreshToken", refreshToken);
-            resultMap.put("profile", profile);  // 프로필 URL 추가
-
-            if (status.equals("BANED")) {
-                log.info("벤");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("정지된 회원입니다");
-            } else if (status.equals("DELETED")) {
-                log.info("탈퇴");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("탈퇴한 회원입니다.");
-            } else if (status.equals("SLEEP")) {
-                log.info("휴면");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("휴면 계정입니다.");
-            } else {
-                // "활동 중" 상태일 경우
-                return ResponseEntity.ok(resultMap);
-            }
+            resultMap.put("profile", profile);
+            log.info("resultMap"+resultMap);
+            return ResponseEntity.ok(resultMap);
 
         }catch (Exception e) {
             log.error(e.getMessage());
@@ -252,6 +265,11 @@ public class UserController {
         String userId = requestBody.get("userId");
         String userStatus = requestBody.get("userStatus");
         log.info("유저 상태 변경요청: " + userStatus);
+        if(userStatus.equals("logout")){
+            userLoginService.changeUserStatus(userId, userStatus);
+            SecurityContextHolder.clearContext();
+            return ResponseEntity.ok("로그아웃 되었습니다.");
+        }
         return ResponseEntity.status(HttpStatus.OK).body(userService.loginStatusChange(userId,userStatus));
     }
 
@@ -260,8 +278,4 @@ public class UserController {
         log.info("유저 상태 조회요청: " + userId);
         return ResponseEntity.status(HttpStatus.OK).body(userService.selectStatus(userId));
     }
-
-
-
-
 }
