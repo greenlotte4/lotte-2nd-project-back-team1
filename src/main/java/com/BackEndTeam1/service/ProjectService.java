@@ -158,7 +158,15 @@ public class ProjectService {
         return new ProjectDTO(project, projectUserNames, projectItemDTOs);
     }
 
+
+    //생성한 프로젝트 가져오기
     public List<Project> findByUserId(String userId) {
         return projectRepository.findByUserId(userId);
     }
+
+    //참여된 프로젝트 가져오기
+    public List<ProjectUser> findByUser(String userId) {
+        return projectRepository.findAllProjectUser(userId);
+    }
+
 }
