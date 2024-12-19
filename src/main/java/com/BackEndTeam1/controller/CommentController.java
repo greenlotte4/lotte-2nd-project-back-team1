@@ -23,19 +23,18 @@ public class CommentController {
 
     @PostMapping("/add")
     public ResponseEntity<?> addComment(@RequestBody CommentDTO commentDTO) {
-        // ID 확인
-        if (commentDTO.getCommentId() == null || commentDTO.getUserId() == null) {
-            return ResponseEntity.badRequest().body("Article ID or User ID must not be null");
+        log.info("Received CommentDTO: {}", commentDTO); // 요청 데이터 로깅
+        if (commentDTO.getUserId() == null || commentDTO.getBoardArticleId() == null) {
+            return ResponseEntity.badRequest().body("User ID or Article ID must not be null");
         }
-        // 댓글 저장 로직
 
         commentService.saveComment(commentDTO);
         return ResponseEntity.ok("댓글이 성공적으로 저장되었습니다.");
     }
 
     @GetMapping("/{commentId}")
-    public ResponseEntity<List<CommentDTO>> getCommentsByArticle(@PathVariable Long commentId) {
-        List<CommentDTO> comments = commentService.getCommentsByArticleId(commentId);
+    public ResponseEntity<List<CommentDTO>> getCommentsByArticle(@PathVariable Integer commentId) {
+        List<CommentDTO> comments = commentService.getCommentsByArticleId(Long.valueOf(commentId));
         log.info("여기임" +comments);
         return ResponseEntity.ok(comments);
     }

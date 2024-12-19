@@ -62,6 +62,10 @@ public class BoardArticle {
     @Column(name = "notification", nullable = false)
     private Boolean notification = false;
 
+    @OneToMany(mappedBy = "article", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ImportantArticle> importantArticles;
+
+
 
     public BoardArticle(Long articleId) {
         this.id = articleId;

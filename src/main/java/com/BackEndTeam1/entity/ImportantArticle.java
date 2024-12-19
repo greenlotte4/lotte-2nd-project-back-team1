@@ -7,6 +7,8 @@ import lombok.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import java.util.Date;
+
 @Getter
 @Setter
 @Builder
@@ -35,4 +37,14 @@ public class ImportantArticle {
 
     @Column(name = "is_important", nullable = false, columnDefinition = "boolean default true")
     private Boolean isImportant;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = new Date();
+    }
+
 }

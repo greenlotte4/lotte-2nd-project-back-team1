@@ -23,7 +23,7 @@ public class CommentService {
     private final UserRepository userRepository;
 
     public void saveComment(CommentDTO requestDTO) {
-        BoardArticle article = boardArticleRepository.findById(requestDTO.getCommentId())
+        BoardArticle article = boardArticleRepository.findById(Math.toIntExact(requestDTO.getBoardArticleId()))
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 존재하지 않습니다."));
 
         User user = userRepository.findById(requestDTO.getUserId())
@@ -46,7 +46,8 @@ public class CommentService {
                         comment.getCommentId(),
                         comment.getCreatedUser().getUsername(),
                         comment.getContent(),
-                        comment.getCreatedAt()
+                        comment.getCreatedAt(),
+                        Math.toIntExact(comment.getBoardArticle().getId())
                 ))
                 .collect(Collectors.toList());
     }

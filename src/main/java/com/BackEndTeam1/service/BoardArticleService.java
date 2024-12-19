@@ -7,6 +7,10 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,6 +39,7 @@ public class BoardArticleService {
     private final ImportantArticleRepository importantArticleRepository;
     private final com.BackEndTeam1.repository.boardFileRepository boardFileRepository;
     private final CommentRepository commentRepository;
+    private final ReplyRepository replyRepository;
 
     public int save(BoardArticleDTO boardArticleDTO) {
         log.info("Saving BoardArticle: {}", boardArticleDTO);
@@ -157,69 +162,70 @@ public class BoardArticleService {
     @Transactional
     public void deleteArticles(List<Long> idList) {
         for (Long articleId : idList) {
-            // 1. 게시물 ID로 파일 목록 조회
+            // 1. 게시물에 첨부된 파일 삭제
             List<BoardFile> files = boardFileRepository.findByBoardArticleId(articleId);
-
-            // 2. 파일 삭제 처리
             for (BoardFile file : files) {
                 try {
                     Path filePath = Paths.get("uploads", file.getFileStoredName());
-                    Files.deleteIfExists(filePath); // 파일이 존재하면 삭제
-                    boardFileRepository.delete(file); // 파일 메타데이터 삭제
-                    log.info("파일 삭제 완료: " + file.getFileStoredName());
-                } catch (IOException e) {
-                    log.error("파일 삭제 중 오류 발생: " + file.getFileStoredName(), e);
-                    throw new RuntimeException("파일 삭제 중 오류 발생", e);
+                    Files.deleteIfExists(filePath);
+                    boardFileRepository.delete(file);
+                } catch (Exception e) {
+                    throw new RuntimeException("파일 삭제 실패", e);
                 }
             }
 
-            // 2. 게시물 ID로 댓글 삭제
-            commentRepository.deleteByBoardArticle_Id(articleId);
-            log.info("댓글 삭제 완료: 게시물 ID = " + articleId);
+            // 2. 댓글 및 답글 삭제
+            List<Comment> comments = commentRepository.findByBoardArticle_Id(articleId);
+            for (Comment comment : comments) {
+                // 댓글에 연결된 답글 삭제
+                replyRepository.deleteByComment_CommentId(comment.getCommentId());
+                // 댓글 삭제
+                commentRepository.delete(comment);
+            }
 
             // 3. 게시물 삭제
-            boardArticleRepository.deleteById(Math.toIntExact(articleId));
-            log.info("게시물 삭제 완료: " + articleId);
+            boardArticleRepository.deleteById(articleId.intValue());
         }
     }
 
-    public List<BoardArticleDTO> getArticlesByBoard(Long boardId) {
-        List<BoardArticle> articles = boardArticleRepository.findByBoard_BoardId(boardId);
+    public Page<BoardArticleDTO> getArticlesByBoard(Long boardId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("mustRead"), Sort.Order.desc("createdAt")));
+
+        // 페이징된 엔티티 가져오기
+        Page<BoardArticle> articlePage = boardArticleRepository.findByBoard_BoardIdAndStatus(boardId, "active", pageable);
 
         // 엔티티 -> DTO 변환
-        return articles.stream()
-                .map(article -> {
-                    // 중요 여부 조회
-                    Boolean isImportant = importantArticleRepository
-                            .findByUser_UserIdAndArticleId(
-                                    article.getAuthor() != null ? article.getAuthor().getUserId() : null,
-                                    article.getId()
-                            )
-                            .map(ImportantArticle::getIsImportant)
-                            .orElse(false); // 기본값 false
+        return articlePage.map(article -> {
+            // 중요 여부 조회
+            Boolean isImportant = importantArticleRepository
+                    .findByUser_UserIdAndArticleId(
+                            article.getAuthor() != null ? article.getAuthor().getUserId() : null,
+                            article.getId()
+                    )
+                    .map(ImportantArticle::getIsImportant)
+                    .orElse(false); // 기본값 false
 
-                    Boolean mustRead = article.getMustRead() != null ? article.getMustRead() : false;
-                    Boolean notification = article.getNotification() !=null ? article.getNotification() : false;
+            Boolean mustRead = article.getMustRead() != null ? article.getMustRead() : false;
+            Boolean notification = article.getNotification() != null ? article.getNotification() : false;
 
-                    // DTO 생성
-                    return new BoardArticleDTO(
-                            article.getId(),
-                            article.getTitle(),
-                            article.getContent(),
-                            article.getBoard() != null ? article.getBoard().getBoardName() : "Unknown",
-                            article.getCreatedAt() != null ? article.getCreatedAt().toString() : null,
-                            article.getUpdatedAt() != null ? article.getUpdatedAt().toString() : null,
-                            article.getAuthor() != null ? article.getAuthor().getUsername() : "Unknown",
-                            article.getAuthor() != null ? article.getAuthor().getUserId().toString() : null,
-                            article.getTrashDate() != null ? article.getTrashDate().toString() : null,
-                            article.getDeletedBy(),
-                            article.getStatus(),
-                            isImportant, // isImportant 필드 추가
-                            mustRead,
-                            notification
-                    );
-                })
-                .collect(Collectors.toList());
+            // DTO 생성
+            return new BoardArticleDTO(
+                    article.getId(),
+                    article.getTitle(),
+                    article.getContent(),
+                    article.getBoard() != null ? article.getBoard().getBoardName() : "Unknown",
+                    article.getCreatedAt() != null ? article.getCreatedAt().toString() : null,
+                    article.getUpdatedAt() != null ? article.getUpdatedAt().toString() : null,
+                    article.getAuthor() != null ? article.getAuthor().getUsername() : "Unknown",
+                    article.getAuthor() != null ? article.getAuthor().getUserId().toString() : null,
+                    article.getTrashDate() != null ? article.getTrashDate().toString() : null,
+                    article.getDeletedBy(),
+                    article.getStatus(),
+                    isImportant,
+                    mustRead,
+                    notification
+            );
+        });
     }
 
     @Transactional
@@ -243,23 +249,25 @@ public class BoardArticleService {
         }
     }
 
-    public List<BoardArticleDTO> getArticlesByUser(String userId) {
-        List<BoardArticle> articles = boardArticleRepository.findByAuthor_UserIdAndStatus(userId, "active");
-        return articles.stream()
-                .map(article -> BoardArticleDTO.builder()
-                        .id(Math.toIntExact(article.getId()))
-                        .title(article.getTitle())
-                        .content(article.getContent())
-                        .boardName(article.getBoard().getBoardName())
-                        .createdAt(article.getCreatedAt().toString())
-                        .updatedAt(article.getUpdatedAt().toString())
-                        .userName(article.getAuthor().getUsername())
-                        .userId(article.getAuthor().getUserId())
-                        .trashDate(article.getTrashDate() != null ? article.getTrashDate().toString() : null)
-                        .deletedBy(article.getDeletedBy() != null ? article.getDeletedBy().getUsername() : "Unknown")
-                        .status(article.getStatus())
-                        .build()
-                ).toList();
+    public Page<BoardArticleDTO> getArticlesByUser(String userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending()); // 최신순 정렬
+        Page<BoardArticle> articlesPage = boardArticleRepository.findByAuthor_UserIdAndStatus(userId, "active", pageable);
+
+        return articlesPage.map(article -> BoardArticleDTO.builder()
+                .id(Math.toIntExact(article.getId()))
+                .title(article.getTitle())
+                .content(article.getContent())
+                .boardName(article.getBoard().getBoardName())
+                .createdAt(article.getCreatedAt().toString())
+                .updatedAt(article.getUpdatedAt().toString())
+                .userName(article.getAuthor().getUsername())
+                .userId(article.getAuthor().getUserId())
+                .trashDate(article.getTrashDate() != null ? article.getTrashDate().toString() : null)
+                .deletedBy(article.getDeletedBy() != null ? article.getDeletedBy().getUsername() : "Unknown")
+                .status(article.getStatus())
+                .mustRead(article.getMustRead()) // 추가
+                .notification(article.getNotification()) // 추가
+                .build());
     }
 
     public boolean isArticleImportant(String userId, Long articleId) {
@@ -269,6 +277,57 @@ public class BoardArticleService {
                 .map(ImportantArticle::getIsImportant)
                 .orElse(false); // 중요하지 않으면 기본값 false 반환
     }
+
+    public List<BoardArticleDTO> getMustReadArticles() {
+        List<BoardArticle> articles = boardArticleRepository.findByMustReadTrue();
+
+        return articles.stream().map(article -> new BoardArticleDTO(
+                article.getId(),
+                article.getTitle(),
+                article.getContent(),
+                article.getBoard() != null ? article.getBoard().getBoardName() : "Unknown",
+                article.getCreatedAt() != null ? article.getCreatedAt().toString() : null,
+                article.getUpdatedAt() != null ? article.getUpdatedAt().toString() : null,
+                article.getAuthor() != null ? article.getAuthor().getUsername() : "Unknown",
+                article.getAuthor() != null ? article.getAuthor().getUserId().toString() : null,
+                article.getTrashDate() != null ? article.getTrashDate().toString() : null,
+                article.getDeletedBy(),
+                article.getStatus(),
+                false, // isImportant는 별도 처리
+                article.getMustRead(),
+                article.getNotification()
+        )).collect(Collectors.toList());
+    }
+
+    public List<BoardArticleDTO> getLatestMustReadArticles() {
+        List<BoardArticle> articles = boardArticleRepository.findByMustReadTrue(
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
+        // DTO 변환
+        return articles.stream()
+                .limit(5) // 최신 5개만 가져오기
+                .map(article -> new BoardArticleDTO(
+                        article.getId(),
+                        article.getTitle(),
+                        article.getContent(),
+                        article.getBoard() != null ? article.getBoard().getBoardName() : "Unknown",
+                        article.getCreatedAt() != null ? article.getCreatedAt().toString() : null,
+                        null,
+                        article.getAuthor() != null ? article.getAuthor().getUsername() : "Unknown",
+                        null,
+                        null,
+                        null,
+                        null,
+                        false,
+                        article.getMustRead(),
+                        article.getNotification()
+                ))
+                .collect(Collectors.toList());
+    }
+
+
+
 
 
 }
