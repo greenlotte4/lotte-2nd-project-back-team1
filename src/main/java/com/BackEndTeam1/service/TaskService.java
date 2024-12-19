@@ -23,26 +23,30 @@ public class TaskService {
 
     //생성
     public Task createTask(TaskDTO taskDTO) {
-        taskRepository.save(modelMapper.map(taskDTO, Task.class));
-        return modelMapper.map(taskDTO, Task.class);
+        Task task = modelMapper.map(taskDTO, Task.class);
+        if (taskDTO.getStartDate() != null && taskDTO.getEndDate() != null) {
+            long totalDuration = taskDTO.getEndDate().getTime() - taskDTO.getStartDate().getTime();
+            long elapsedDuration = System.currentTimeMillis() - taskDTO.getStartDate().getTime();
+
+            int progress = totalDuration > 0
+                    ? (int) Math.min(Math.max((elapsedDuration / (double) totalDuration) * 100, 0), 100)
+                    : 0;
+
+            task.setPriority(progress);
+        } else {
+            task.setPriority(0);
+        }
+        taskRepository.save(task);
+        return task;
     }
+
     //수정
     public Task updateTask(Long taskId, TaskDTO taskDTO) {
-        // Task를 ID로 조회
         Task existingTask = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task ID를 찾을 수 없습니다: " + taskId));
 
-        // DTO의 데이터를 Task 엔티티에 매핑
         if (taskDTO.getName() != null) {
             existingTask.setName(taskDTO.getName());
-        }
-        if (taskDTO.getAssignee() != null) {
-            User assignee = userRepository.findByUserId(taskDTO.getAssignee())
-                    .orElseThrow(() -> new RuntimeException("유효하지 않은 사용자 ID: " + taskDTO.getAssignee()));
-            existingTask.setAsignee(assignee.getUserId());
-        }
-        if (taskDTO.getStatus() != null) {
-            existingTask.setStatus(taskDTO.getStatus());
         }
         if (taskDTO.getStartDate() != null) {
             existingTask.setStartDate(taskDTO.getStartDate());
@@ -50,16 +54,14 @@ public class TaskService {
         if (taskDTO.getEndDate() != null) {
             existingTask.setEndDate(taskDTO.getEndDate());
         }
-        if (taskDTO.getDescription() != null) {
-            existingTask.setDescription(taskDTO.getDescription());
-        }
         if (taskDTO.getPriority() != null) {
-            existingTask.setPriority(taskDTO.getPriority());
+            existingTask.setPriority(taskDTO.getPriority()); // priority 값 설정
         }
 
-        // 업데이트된 Task 저장
         return taskRepository.save(existingTask);
     }
+
+
 
     //삭제
     public void delete(Long id) {

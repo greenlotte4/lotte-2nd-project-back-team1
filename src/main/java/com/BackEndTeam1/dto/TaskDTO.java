@@ -31,6 +31,7 @@ public class TaskDTO {
         this.name = task.getName();
         this.status = task.getStatus();
         this.assignee = task.getAssignee() != null ? task.getAssignee().getUserId() : "Unassigned";
+        this.priority = task.getPriority();
         this.startDate = task.getStartDate();
         this.endDate = task.getEndDate();
     }

@@ -62,6 +62,7 @@ public class ProjectController {
     @GetMapping("/project/{id}")
     public ResponseEntity<?> getProjectData(@PathVariable Long id) {
         ProjectDTO projectDTO = projectService.getProjectDetails(id);
+        System.out.println("Returned Project DTO: " + projectDTO); // 전체 데이터 로그 출력
         Map<String, Object> response = new HashMap<>();
         response.put("project", projectDTO);
 
