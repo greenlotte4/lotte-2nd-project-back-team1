@@ -22,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -188,42 +189,39 @@ public class BoardArticleController {
     }
 
     @GetMapping("/trash")
-    public ResponseEntity<List<BoardArticleDTO>> getTrashArticles(@RequestParam String userId) {
+    public ResponseEntity<Page<BoardArticleDTO>> getTrashArticles(
+            @RequestParam String userId,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         try {
-            List<BoardArticle> trashArticles = boardArticleRepository.findByStatusAndDeletedBy("trash", userId);
+            Page<BoardArticle> trashArticles = boardArticleRepository.findByStatusAndDeletedBy("trash", userId, pageable);
 
             // 엔티티를 DTO로 변환
-            List<BoardArticleDTO> trashDTOs = trashArticles.stream()
-                    .map(article -> {
-                        // 중요 여부 조회
-                        Boolean isImportant = importantArticleRepository
-                                .findByUser_UserIdAndArticleId(userId, article.getId())
-                                .map(ImportantArticle::getIsImportant)
-                                .orElse(false); // 기본값 false
+            Page<BoardArticleDTO> trashDTOs = trashArticles.map(article -> {
+                Boolean isImportant = importantArticleRepository
+                        .findByUser_UserIdAndArticleId(userId, article.getId())
+                        .map(ImportantArticle::getIsImportant)
+                        .orElse(false); // 기본값 false
 
-                        Boolean mustRead = article.getMustRead() != null ? article.getMustRead() : false;
-                        Boolean notification = article.getNotification() != null ? article.getNotification() : false;
+                Boolean mustRead = article.getMustRead() != null ? article.getMustRead() : false;
+                Boolean notification = article.getNotification() != null ? article.getNotification() : false;
 
-                        // DTO 생성
-                        return new BoardArticleDTO(
-                                article.getId(),
-                                article.getTitle(),
-                                article.getContent(),
-                                article.getBoard() != null ? article.getBoard().getBoardName() : "Unknown",
-                                article.getCreatedAt() != null ? article.getCreatedAt().toString() : "Unknown",
-                                article.getUpdatedAt() != null ? article.getUpdatedAt().toString() : "Unknown",
-                                article.getAuthor() != null ? article.getAuthor().getUsername() : "Unknown",
-                                article.getAuthor() != null ? article.getAuthor().getUserId() : "Unknown",
-                                article.getTrashDate() != null ? article.getTrashDate().toString() : "Unknown",
-                                article.getDeletedBy(),
-                                article.getStatus(),
-                                isImportant, // isImportant 필드 추가
-                                mustRead,
-                                notification
-
-                        );
-                    })
-                    .collect(Collectors.toList());
+                return new BoardArticleDTO(
+                        article.getId(),
+                        article.getTitle(),
+                        article.getContent(),
+                        article.getBoard() != null ? article.getBoard().getBoardName() : "Unknown",
+                        article.getCreatedAt() != null ? article.getCreatedAt().toString() : "Unknown",
+                        article.getUpdatedAt() != null ? article.getUpdatedAt().toString() : "Unknown",
+                        article.getAuthor() != null ? article.getAuthor().getUsername() : "Unknown",
+                        article.getAuthor() != null ? article.getAuthor().getUserId() : "Unknown",
+                        article.getTrashDate() != null ? article.getTrashDate().toString() : "Unknown",
+                        article.getDeletedBy(),
+                        article.getStatus(),
+                        isImportant, // isImportant 필드 추가
+                        mustRead,
+                        notification
+                );
+            });
 
             return ResponseEntity.ok(trashDTOs);
         } catch (Exception e) {
@@ -331,8 +329,11 @@ public class BoardArticleController {
     }
 
     @GetMapping("/must-read")
-    public ResponseEntity<List<BoardArticleDTO>> getMustReadArticles() {
-        List<BoardArticleDTO> articles = boardArticleService.getMustReadArticles();
+    public ResponseEntity<Page<BoardArticleDTO>> getMustReadArticles(
+            @RequestParam(defaultValue = "0") int page, // 기본값 0 (첫 번째 페이지)
+            @RequestParam(defaultValue = "10") int size // 기본값 10 (한 페이지 당 10개)
+    ) {
+        Page<BoardArticleDTO> articles = boardArticleService.getMustReadArticles(page, size);
         return ResponseEntity.ok(articles);
     }
 
@@ -343,29 +344,35 @@ public class BoardArticleController {
     }
 
     @GetMapping("/recent")
-    public List<BoardArticleDTO> getRecentArticles() {
+    public Page<BoardArticleDTO> getRecentArticles(
+            @RequestParam(defaultValue = "0") int page,  // 페이지 번호 (0부터 시작)
+            @RequestParam(defaultValue = "10") int size // 한 페이지당 게시글 수
+    ) {
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
-        List<BoardArticle> articles = boardArticleRepository.findRecentArticles(thirtyDaysAgo);
 
-        // DTO로 변환하여 반환
-        return articles.stream()
-                .map(article -> new BoardArticleDTO(
-                        article.getId(),
-                        article.getTitle(),
-                        article.getContent(),
-                        article.getBoard().getBoardName(),
-                        article.getCreatedAt().toString(),
-                        article.getUpdatedAt().toString(),
-                        article.getAuthor().getUsername(),
-                        article.getAuthor().getUserId().toString(),
-                        article.getTrashDate() != null ? article.getTrashDate().toString() : null,
-                        article.getDeletedBy() != null ? article.getDeletedBy() : null,
-                        article.getStatus(),
-                        null,
-                        article.getMustRead(),
-                        article.getNotification()
-                ))
-                .collect(Collectors.toList());
+        // Pageable 객체 생성 (페이지 번호, 크기, 정렬 기준)
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        // Repository 호출하여 페이징된 데이터 가져오기
+        Page<BoardArticle> articles = boardArticleRepository.findRecentArticles(thirtyDaysAgo, pageable);
+
+        // DTO로 변환
+        return articles.map(article -> new BoardArticleDTO(
+                article.getId(),
+                article.getTitle(),
+                article.getContent(),
+                article.getBoard() != null ? article.getBoard().getBoardName() : "Unknown",
+                article.getCreatedAt() != null ? article.getCreatedAt().toString() : null,
+                article.getUpdatedAt() != null ? article.getUpdatedAt().toString() : null,
+                article.getAuthor() != null ? article.getAuthor().getUsername() : "Unknown",
+                article.getAuthor() != null ? article.getAuthor().getUserId().toString() : null,
+                article.getTrashDate() != null ? article.getTrashDate().toString() : null,
+                article.getDeletedBy(),
+                article.getStatus(),
+                null,
+                article.getMustRead(),
+                article.getNotification()
+        ));
     }
 
     @GetMapping("/recent/ten")

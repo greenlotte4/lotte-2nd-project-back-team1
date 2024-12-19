@@ -278,10 +278,15 @@ public class BoardArticleService {
                 .orElse(false); // 중요하지 않으면 기본값 false 반환
     }
 
-    public List<BoardArticleDTO> getMustReadArticles() {
-        List<BoardArticle> articles = boardArticleRepository.findByMustReadTrue();
+    public Page<BoardArticleDTO> getMustReadArticles(int page, int size) {
+        // Pageable 생성: 페이지 번호와 크기, 정렬 기준 설정
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        return articles.stream().map(article -> new BoardArticleDTO(
+        // Repository 호출로 Page 객체 가져오기
+        Page<BoardArticle> articles = boardArticleRepository.findByMustReadTrue(pageable);
+
+        // Page 객체를 DTO로 변환하여 반환
+        return articles.map(article -> new BoardArticleDTO(
                 article.getId(),
                 article.getTitle(),
                 article.getContent(),
@@ -293,20 +298,19 @@ public class BoardArticleService {
                 article.getTrashDate() != null ? article.getTrashDate().toString() : null,
                 article.getDeletedBy(),
                 article.getStatus(),
-                false, // isImportant는 별도 처리
+                false,
                 article.getMustRead(),
                 article.getNotification()
-        )).collect(Collectors.toList());
+        ));
     }
 
     public List<BoardArticleDTO> getLatestMustReadArticles() {
-        List<BoardArticle> articles = boardArticleRepository.findByMustReadTrue(
-                Sort.by(Sort.Direction.DESC, "createdAt")
-        );
+        // Pageable 생성: 최신순 정렬, 5개 데이터만 요청
+        Pageable pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        // DTO 변환
-        return articles.stream()
-                .limit(5) // 최신 5개만 가져오기
+        // Repository 호출
+        return boardArticleRepository.findByMustReadTrue(pageable)
+                .stream()
                 .map(article -> new BoardArticleDTO(
                         article.getId(),
                         article.getTitle(),
@@ -325,9 +329,5 @@ public class BoardArticleService {
                 ))
                 .collect(Collectors.toList());
     }
-
-
-
-
 
 }
