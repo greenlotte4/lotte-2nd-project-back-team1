@@ -2,6 +2,7 @@ package com.BackEndTeam1.controller;
 
 import com.BackEndTeam1.dto.CalendarDTO;
 import com.BackEndTeam1.dto.CalendarEventDTO;
+import com.BackEndTeam1.repository.UserRepository;
 import com.BackEndTeam1.service.CalendarEventService;
 import com.BackEndTeam1.service.CalendarService;
 import com.BackEndTeam1.service.CalendarUserService;
@@ -9,7 +10,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +25,8 @@ public class CalendarController {
     private final CalendarService calendarService;
     private final CalendarUserService calendarUserService;
     private final CalendarEventService calendarEventService;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final UserRepository userRepository;
     //달력 생성
     @PostMapping("/makecalendar")
     public ResponseEntity<CalendarDTO> createCalendar(@RequestBody CalendarDTO calendarDTO) {
@@ -93,9 +97,24 @@ public class CalendarController {
         for (CalendarEventDTO dto : eventList) {
             log.info("이벤트: " + dto.toString());
         }
+        // DB에 일정 저장
         calendarEventService.addCalendarEvents(eventList);
-        // 여기서 서비스 호출 로직 등 처리
-        return ResponseEntity.ok("일정 추가 성공");
+        return ResponseEntity.ok("일정 추가 및 전파 성공");
+    }
+    @MessageMapping("/addevent/send")
+    public void addeventsend(@RequestBody List<CalendarEventDTO> eventList) {
+        log.info("eventList.toString()"+eventList.size());
+        for (CalendarEventDTO event : eventList) {
+            try {
+                String destination = "/sub/calendar/"  + event.getCalendarId();
+                log.info("메시지 전송 경로: {}", destination);
+                List<CalendarEventDTO> events = calendarEventService.getEventsByCalendarId(event.getCalendarId());
+                log.info("데이터 전달 :"+events);
+                messagingTemplate.convertAndSend(destination, events);
+            } catch (Exception e) {
+                log.error("메시지 처리 중 오류 발생: ", e);
+            }
+        }
     }
     @PutMapping("/editevent")
     public ResponseEntity<?> editevent(@RequestBody List<CalendarEventDTO> eventList) {

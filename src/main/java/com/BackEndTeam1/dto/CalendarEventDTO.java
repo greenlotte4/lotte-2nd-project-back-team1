@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 public class CalendarEventDTO {
     private Integer calendarEventId;
     private Calendar calendar;
-    private String calendarId;
+    private Integer calendarId;
     private User assignee;
     private String assigneeId;
     private String name;
