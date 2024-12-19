@@ -17,7 +17,7 @@ public interface BoardArticleRepository extends JpaRepository<BoardArticle, Inte
     List<BoardArticle> findByStatus(String status);
 
     @Query("SELECT b FROM BoardArticle b WHERE b.status = :status AND b.deletedBy.userId = :userId")
-    List<BoardArticle> findByStatusAndDeletedBy(String status, String userId);
+    Page<BoardArticle> findByStatusAndDeletedBy(String status, String userId, Pageable pageable);
 
     @Query("SELECT b FROM BoardArticle b WHERE b.status = 'trash' AND b.trashDate <= :cutoffDate")
     List<BoardArticle> findOldTrashArticles(@Param("cutoffDate") LocalDateTime cutoffDate);
@@ -40,10 +40,10 @@ public interface BoardArticleRepository extends JpaRepository<BoardArticle, Inte
 
     List<BoardArticle> findByMustReadTrue();
 
-    List<BoardArticle> findByMustReadTrue(Sort sort);
+    Page<BoardArticle> findByMustReadTrue(Pageable pageable);
 
     @Query("SELECT b FROM BoardArticle b WHERE b.createdAt >= :startDate AND b.status = 'active' ORDER BY b.createdAt DESC")
-    List<BoardArticle> findRecentArticles(LocalDateTime startDate);
+    Page<BoardArticle> findRecentArticles(LocalDateTime startDate, Pageable pageable);
 
     @Query("SELECT b FROM BoardArticle b WHERE b.status = 'active' ORDER BY b.createdAt DESC")
     List<BoardArticle> findTop10ByStatusOrderByCreatedAtDesc(Pageable pageable);
