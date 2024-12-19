@@ -18,6 +18,9 @@ import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -272,20 +275,13 @@ public class BoardArticleController {
     }
 
     @GetMapping("/boards/{boardId}/articles")
-    public ResponseEntity<Map<String, Object>> getArticlesByBoard(@PathVariable Long boardId) {
-        // boardId로 모든 articles 가져오기
-        List<BoardArticleDTO> allArticles = boardArticleService.getArticlesByBoard(boardId);
-
-        // status가 'active'인 글만 필터링
-        List<BoardArticleDTO> activeArticles = allArticles.stream()
-                .filter(article -> "active".equals(article.getStatus()))
-                .sorted(Comparator
-                        // 필독 여부를 기준으로 먼저 정렬 (true가 위로 오게)
-                        .comparing(BoardArticleDTO::getMustRead, Comparator.reverseOrder())
-                        // 이후 날짜를 기준으로 정렬 (내림차순, 최근 날짜부터)
-                        .thenComparing(article -> LocalDateTime.parse(article.getCreatedAt()), Comparator.reverseOrder())
-                )
-                .collect(Collectors.toList());
+    public ResponseEntity<Map<String, Object>> getArticlesByBoard(
+            @PathVariable Long boardId,
+            @RequestParam(defaultValue = "0") int page, // 기본값 0 (첫 페이지)
+            @RequestParam(defaultValue = "10") int size // 기본값 20개씩
+    ) {
+        // 페이징된 결과 가져오기
+        Page<BoardArticleDTO> articlePage = boardArticleService.getArticlesByBoard(boardId, page, size);
 
         // boardId로 boardName 조회
         String boardName = boardService.getBoardNameById(boardId);
@@ -293,7 +289,10 @@ public class BoardArticleController {
         // 응답 데이터 구성
         Map<String, Object> response = new HashMap<>();
         response.put("boardName", boardName);
-        response.put("articles", activeArticles);
+        response.put("articles", articlePage.getContent()); // 현재 페이지의 게시글 목록
+        response.put("currentPage", articlePage.getNumber()); // 현재 페이지 번호
+        response.put("totalPages", articlePage.getTotalPages()); // 전체 페이지 수
+        response.put("totalElements", articlePage.getTotalElements()); // 전체 게시글 수
 
         return ResponseEntity.ok(response);
     }
@@ -309,16 +308,91 @@ public class BoardArticleController {
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<BoardArticleDTO>> getArticlesByUser(@PathVariable String userId) {
-        List<BoardArticleDTO> articles = boardArticleService.getArticlesByUser(userId);
+    public ResponseEntity<Map<String, Object>> getArticlesByUser(
+            @PathVariable String userId,
+            @RequestParam(defaultValue = "0") int page, // 페이지 번호
+            @RequestParam(defaultValue = "10") int size // 페이지 크기
+    ) {
+        Page<BoardArticleDTO> articlesPage = boardArticleService.getArticlesByUser(userId, page, size);
 
-        // `isImportant` 값을 설정
-        articles.forEach(article -> {
+        articlesPage.getContent().forEach(article -> {
             boolean isImportant = boardArticleService.isArticleImportant(userId, (long) article.getId());
             article.setIsImportant(isImportant); // DTO에 설정
         });
 
+        // 응답 데이터 구성
+        Map<String, Object> response = new HashMap<>();
+        response.put("articles", articlesPage.getContent());
+        response.put("currentPage", articlesPage.getNumber());
+        response.put("totalPages", articlesPage.getTotalPages());
+        response.put("totalElements", articlesPage.getTotalElements());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/must-read")
+    public ResponseEntity<List<BoardArticleDTO>> getMustReadArticles() {
+        List<BoardArticleDTO> articles = boardArticleService.getMustReadArticles();
         return ResponseEntity.ok(articles);
     }
+
+    @GetMapping("/must-read/latest")
+    public ResponseEntity<List<BoardArticleDTO>> getLatestMustReadArticles() {
+        List<BoardArticleDTO> articles = boardArticleService.getLatestMustReadArticles();
+        return ResponseEntity.ok(articles);
+    }
+
+    @GetMapping("/recent")
+    public List<BoardArticleDTO> getRecentArticles() {
+        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+        List<BoardArticle> articles = boardArticleRepository.findRecentArticles(thirtyDaysAgo);
+
+        // DTO로 변환하여 반환
+        return articles.stream()
+                .map(article -> new BoardArticleDTO(
+                        article.getId(),
+                        article.getTitle(),
+                        article.getContent(),
+                        article.getBoard().getBoardName(),
+                        article.getCreatedAt().toString(),
+                        article.getUpdatedAt().toString(),
+                        article.getAuthor().getUsername(),
+                        article.getAuthor().getUserId().toString(),
+                        article.getTrashDate() != null ? article.getTrashDate().toString() : null,
+                        article.getDeletedBy() != null ? article.getDeletedBy() : null,
+                        article.getStatus(),
+                        null,
+                        article.getMustRead(),
+                        article.getNotification()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/recent/ten")
+    public List<BoardArticleDTO> getTop10RecentArticles() {
+        Pageable pageable = PageRequest.of(0, 10); // 첫 번째 페이지, 10개만 가져오기
+        List<BoardArticle> articles = boardArticleRepository.findTop10ByStatusOrderByCreatedAtDesc(pageable);
+
+        // DTO로 변환하여 반환
+        return articles.stream()
+                .map(article -> new BoardArticleDTO(
+                        article.getId(),
+                        article.getTitle(),
+                        article.getContent(),
+                        article.getBoard().getBoardName(),
+                        article.getCreatedAt().toString(),
+                        article.getUpdatedAt().toString(),
+                        article.getAuthor().getUsername(),
+                        article.getAuthor().getUserId().toString(),
+                        article.getTrashDate() != null ? article.getTrashDate().toString() : null,
+                        article.getDeletedBy() != null ? article.getDeletedBy() : null,
+                        article.getStatus(),
+                        null,
+                        article.getMustRead(),
+                        article.getNotification()
+                ))
+                .collect(Collectors.toList());
+    }
+
 
 }

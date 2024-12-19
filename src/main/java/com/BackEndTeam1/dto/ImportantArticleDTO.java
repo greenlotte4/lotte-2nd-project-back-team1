@@ -2,6 +2,8 @@ package com.BackEndTeam1.dto;
 
 import lombok.*;
 
+import java.util.Date;
+
 @Getter
 @Setter
 @ToString
@@ -15,4 +17,6 @@ public class ImportantArticleDTO {
     private Long articleId;
     private String title;
     private String content;
+    private String boardName;
+    private Date boardCreatedAt;
 }

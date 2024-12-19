@@ -3,7 +3,9 @@ package com.BackEndTeam1.repository;
 import com.BackEndTeam1.entity.Board;
 import com.BackEndTeam1.entity.BoardArticle;
 import io.lettuce.core.dynamic.annotation.Param;
-import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -32,6 +34,19 @@ public interface BoardArticleRepository extends JpaRepository<BoardArticle, Inte
 
     List<BoardArticle> findByBoard_BoardId(Long boardId);
 
-    List<BoardArticle> findByAuthor_UserIdAndStatus(String userId, String status);
+    Page<BoardArticle> findByAuthor_UserIdAndStatus(String userId, String status, Pageable pageable);
+
+    Page<BoardArticle> findByBoard_BoardIdAndStatus(Long boardId, String status, Pageable pageable);
+
+    List<BoardArticle> findByMustReadTrue();
+
+    List<BoardArticle> findByMustReadTrue(Sort sort);
+
+    @Query("SELECT b FROM BoardArticle b WHERE b.createdAt >= :startDate AND b.status = 'active' ORDER BY b.createdAt DESC")
+    List<BoardArticle> findRecentArticles(LocalDateTime startDate);
+
+    @Query("SELECT b FROM BoardArticle b WHERE b.status = 'active' ORDER BY b.createdAt DESC")
+    List<BoardArticle> findTop10ByStatusOrderByCreatedAtDesc(Pageable pageable);
+
 
 }

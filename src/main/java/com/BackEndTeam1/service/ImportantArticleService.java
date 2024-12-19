@@ -1,14 +1,19 @@
 package com.BackEndTeam1.service;
 
+import com.BackEndTeam1.dto.ImportantArticleDTO;
 import com.BackEndTeam1.entity.BoardArticle;
 import com.BackEndTeam1.entity.ImportantArticle;
 import com.BackEndTeam1.entity.User;
 import com.BackEndTeam1.repository.ImportantArticleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -32,5 +37,18 @@ public class ImportantArticleService {
                     .build();
             importantArticleRepository.save(newImportantArticle);
         }
+    }
+
+    public Page<ImportantArticleDTO> getImportantArticlesByUser(String userId, Pageable pageable) {
+        return importantArticleRepository.findByUser_UserId(userId, pageable)
+                .map(article -> ImportantArticleDTO.builder()
+                        .importantId(article.getImportantId())
+                        .userId(article.getUser().getUserId())
+                        .articleId(article.getArticle().getId())
+                        .title(article.getArticle().getTitle())
+                        .content(article.getArticle().getContent())
+                        .boardName(article.getArticle().getBoard().getBoardName())
+                        .boardCreatedAt(article.getArticle().getBoard().getCreatedAt())
+                        .build());
     }
 }

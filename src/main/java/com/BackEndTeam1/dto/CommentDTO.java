@@ -16,12 +16,14 @@ public class CommentDTO {
     private Integer commentId;
     private String content;
     private String createdAt;
+    private Integer boardArticleId; // 게시글 ID
 
 
-    public CommentDTO(Integer commentId, String username, String content, Timestamp createdAt) {
+    public CommentDTO(Integer commentId, String username, String content, Timestamp createdAt, Integer boardArticleId) {
         this.userId = username;
         this.content = content;
         this.createdAt = createdAt.toString();
         this.commentId = commentId;
+        this.boardArticleId = boardArticleId;
     }
 }
