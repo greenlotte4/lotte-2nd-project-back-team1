@@ -27,7 +27,7 @@ public class MypageController {
     private final UserRepository userRepository;
 
     @PostMapping("/plan-history")
-    public ResponseEntity<String> savePlanHistory(@RequestBody PlanHistoryDTO planHistoryDTO) {
+    public ResponseEntity<String> savePlanHistoryAndUpdateUser(@RequestBody PlanHistoryDTO planHistoryDTO) {
         log.info("Received PlanHistoryDTO: " + planHistoryDTO);
 
         LocalDate startDate = planHistoryDTO.getStartDate();
@@ -35,19 +35,15 @@ public class MypageController {
 
         log.info("Start Date: " + startDate);
         log.info("End Date: " + endDate);
-
-        // 나머지 로직 처리
-
-
-        // planId와 userId가 null인지 체크
-        if (planHistoryDTO.getPlanId() == null || planHistoryDTO.getUserId() == null) {
-            log.error("Plan ID or User ID is null.");
-            return ResponseEntity.badRequest().body("Plan ID and User ID must not be null.");
-        }
+        log.info("planHistoryDTO.getUserId()"+planHistoryDTO.getUserId());
+        log.info("planHistoryDTO.getPlanId()"+planHistoryDTO.getPlanId());
 
         // Plan과 User 객체를 ID로부터 조회
         Optional<Plan> planOptional = planRepository.findById(planHistoryDTO.getPlanId());
-        Optional<User> userOptional = userRepository.findById(String.valueOf(planHistoryDTO.getUserId()));
+        Optional<User> userOptional = userRepository.findByUserId(planHistoryDTO.getUserId());
+
+        log.info("plan: " +planOptional.get());
+        log.info("user: " +userOptional.get());
 
         if (planOptional.isEmpty() || userOptional.isEmpty()) {
             log.error("Plan or User not found for the given IDs.");
@@ -57,23 +53,30 @@ public class MypageController {
         Plan plan = planOptional.get();
         User user = userOptional.get();
 
-        // PlanHistory 객체 생성
+        log.info("plan"+plan.toString());
+        log.info("user"+user.toString());
+        // PlanHistory 객체 생성 및 저장
         PlanHistory planHistory = PlanHistory.builder()
                 .user(user)
                 .plan(plan)
-                .startDate(planHistoryDTO.getStartDate())
-                .endDate(planHistoryDTO.getEndDate())
+                .startDate(startDate)
+                .endDate(endDate)
                 .createdAt(new Timestamp(System.currentTimeMillis()))
                 .updatedAt(new Timestamp(System.currentTimeMillis()))
                 .build();
 
+        // User의 plan 업데이트
+        user.setPlan(planOptional.get());
+
         try {
+            // PlanHistory와 User 저장
             planHistoryRepository.save(planHistory);
+            userRepository.save(user);
         } catch (Exception e) {
-            log.error("Error saving PlanHistory", e);
-            return ResponseEntity.status(500).body("Error saving plan history.");
+            log.error("PlanHistory 저장 또는 User 업데이트 중 오류 발생", e);
+            return ResponseEntity.status(500).body("Plan 이력 저장 또는 사용자 업데이트 중 오류가 발생했습니다.");
         }
 
-        return ResponseEntity.ok("Plan history saved successfully!");
+        return ResponseEntity.ok("Plan 이력이 성공적으로 저장되고, 사용자 정보가 업데이트되었습니다!");
     }
 }

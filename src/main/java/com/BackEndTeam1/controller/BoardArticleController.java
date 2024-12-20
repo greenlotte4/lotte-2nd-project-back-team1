@@ -1,10 +1,7 @@
 package com.BackEndTeam1.controller;
 
-import com.BackEndTeam1.dto.BoardArticleDTO;
-import com.BackEndTeam1.dto.BoardFileDTO;
-import com.BackEndTeam1.dto.MoveArticlesDTO;
+import com.BackEndTeam1.dto.*;
 import com.BackEndTeam1.entity.BoardArticle;
-import com.BackEndTeam1.entity.BoardFile;
 import com.BackEndTeam1.entity.ImportantArticle;
 import com.BackEndTeam1.entity.User;
 import com.BackEndTeam1.repository.BoardArticleRepository;
@@ -12,32 +9,21 @@ import com.BackEndTeam1.repository.ImportantArticleRepository;
 import com.BackEndTeam1.repository.UserRepository;
 import com.BackEndTeam1.service.BoardArticleService;
 import com.BackEndTeam1.service.BoardService;
-import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -403,5 +389,24 @@ public class BoardArticleController {
                 .collect(Collectors.toList());
     }
 
+    @GetMapping("/board/{boardId}/search")
+    public ResponseEntity<?> searchArticles(
+            @PathVariable Integer boardId,
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            Page<BoardArticleDTO> articles = boardArticleService.searchArticlesByTitle(boardId, keyword, page, size);
+            return ResponseEntity.ok(articles);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("검색 중 오류가 발생했습니다.");
+        }
+    }
+
+    @GetMapping("/freerecent")
+    public List<BoardArticle> getRecentFreeBoardArticles(
+            @RequestParam(defaultValue = "자유게시판") String boardName) {
+        return boardArticleService.getRecentArticlesByBoardName(boardName);
+    }
 
 }

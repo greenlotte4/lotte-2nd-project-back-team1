@@ -304,4 +304,16 @@ public class UserService {
         UserLoginDocument user = userOpt.get();
         return user.getCurrentStatus();
     }
+
+    // 사용자에 plan을 업데이트하는 메서드
+    public User updateUserPlan(String userId, Long planId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+        Plan plan = planRepository.findById(planId)
+                .orElseThrow(() -> new RuntimeException("Plan not found with ID: " + planId));
+
+        user.setPlan(plan); // 사용자에 Plan 설정
+        return userRepository.save(user); // 저장 후 업데이트된 사용자 반환
+    }
 }

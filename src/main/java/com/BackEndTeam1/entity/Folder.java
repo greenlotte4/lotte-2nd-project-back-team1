@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 @Getter
 @Setter
@@ -26,7 +27,8 @@ public class Folder {
     @JoinColumn(name = "created_user_id")
     private User createdUser;
 
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "parent_id")
     private Folder parentFolder;
 
@@ -42,4 +44,10 @@ public class Folder {
     private Timestamp updatedAt;
 
     private boolean isShared;
+
+    @OneToMany(mappedBy = "folder")
+    private List<DriveFile> driveFiles; // 해당 폴더에 속한 파일들
+
+    @Builder.Default
+    private String type = "folder";
 }
