@@ -1,6 +1,7 @@
 package com.BackEndTeam1.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -40,6 +41,7 @@ public class BoardArticle {
 
     @ManyToOne
     @JoinColumn(name = "board_id")
+    @JsonIgnore
     private Board board;
 
     @Column(nullable = false, length = 20)
