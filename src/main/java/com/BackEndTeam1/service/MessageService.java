@@ -69,4 +69,27 @@ public class MessageService {
         int chatRoomCount = chatRoomRepository.countByDMAndUserId(userId);
         return chatRoomCount < 3;
     }
+
+    public boolean leaveChatRoom(int chatRoomId) {
+        try{
+            chatRoomRepository.deleteById(chatRoomId);
+            return true;
+        }catch (Exception e){
+            return false;
+        }
+    }
+
+    public ChatRoomDTO findChatRoomById(Integer chatRoomId) {
+        Optional<ChatRoom> chatRoom = chatRoomRepository.findById(chatRoomId);
+        return modelMapper.map(chatRoom.get(), ChatRoomDTO.class);
+    }
+
+    public boolean deleteChat(int chatId) {
+        try {
+            chatRepository.deleteById(chatId);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }
