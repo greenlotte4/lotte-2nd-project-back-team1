@@ -1,5 +1,6 @@
 package com.BackEndTeam1.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 @Getter
@@ -10,6 +11,7 @@ import lombok.*;
 @Builder
 public class BoardDTO {
     private int board_id;
+    @JsonProperty("boardName")
     private String board_name;
     @Builder.Default
     private int max_collaborators = 3;

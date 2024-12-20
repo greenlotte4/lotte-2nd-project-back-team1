@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -329,5 +330,24 @@ public class BoardArticleService {
                 ))
                 .collect(Collectors.toList());
     }
+
+    public Page<BoardArticleDTO> searchArticlesByTitle(Integer boardId, String keyword, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+        return boardArticleRepository.findByBoard_BoardIdAndTitleContainingIgnoreCase(boardId, keyword, pageRequest)
+                .map(BoardArticleDTO::new); // 필요한 DTO 변환
+    }
+
+    public List<BoardArticle> getRecentArticlesByBoardName(String boardName) {
+        // 게시판 이름으로 Board 조회
+        Board board = boardRepository.findByName(boardName);
+        if (board == null) {
+            throw new RuntimeException("Board not found: " + boardName);
+        }
+
+        // Board ID로 게시글 조회
+        return boardArticleRepository.findTop5ByBoardIdOrderByCreatedAtDesc(Long.valueOf(board.getBoardId()));
+    }
+
+
 
 }

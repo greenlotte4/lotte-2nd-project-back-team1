@@ -48,6 +48,13 @@ public interface BoardArticleRepository extends JpaRepository<BoardArticle, Inte
     @Query("SELECT b FROM BoardArticle b WHERE b.status = 'active' ORDER BY b.createdAt DESC")
     List<BoardArticle> findTop10ByStatusOrderByCreatedAtDesc(Pageable pageable);
 
+    Page<BoardArticle> findByBoard_BoardIdAndTitleContainingIgnoreCase(Integer boardId, String title, Pageable pageable);
+
+    @Query("SELECT a FROM BoardArticle a WHERE a.board.boardId = :boardId ORDER BY a.createdAt DESC")
+    List<BoardArticle> findTop5ByBoardIdOrderByCreatedAtDesc(@Param("boardId") Long boardId);
+
+
+
 
 
 
