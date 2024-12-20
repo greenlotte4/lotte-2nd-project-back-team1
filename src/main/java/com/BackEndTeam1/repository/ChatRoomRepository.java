@@ -18,4 +18,8 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Integer> {
 
     List<ChatRoom> findByChatChatId(Integer chatId);
 
+    @Query("SELECT COUNT(cr) FROM ChatRoom cr " +
+            "WHERE cr.chat.dtype = 'DM' AND cr.user.userId = :userId")
+    int countByDMAndUserId(@Param("userId") String userId);
+
 }
