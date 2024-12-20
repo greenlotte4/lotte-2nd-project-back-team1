@@ -51,4 +51,9 @@ public class UserDTO {
         }
     }
 
+    public UserDTO(String userId, String username, String userStatus) {
+        this.userId = userId;
+        this.username = username;
+        this.userStatus = userStatus;
+    }
 }

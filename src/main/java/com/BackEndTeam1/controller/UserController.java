@@ -265,12 +265,11 @@ public class UserController {
         String userId = requestBody.get("userId");
         String userStatus = requestBody.get("userStatus");
         log.info("유저 상태 변경요청: " + userStatus);
-        if(userStatus.equals("logout")){
-            userLoginService.changeUserStatus(userId, userStatus);
-            SecurityContextHolder.clearContext();
-            return ResponseEntity.ok("로그아웃 되었습니다.");
-        }
-        return ResponseEntity.status(HttpStatus.OK).body(userService.loginStatusChange(userId,userStatus));
+        userLoginService.changeUserStatus(userId, userStatus);
+        userService.loginStatusChange(userId, userStatus);
+        SecurityContextHolder.clearContext();
+        return ResponseEntity.ok("상태가 변경 되었습니다.");
+//        return ResponseEntity.status(HttpStatus.OK).body(userService.loginStatusChange(userId,userStatus));
     }
 
     @GetMapping("/selectLoginStatus")
