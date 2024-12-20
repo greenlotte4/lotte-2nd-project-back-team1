@@ -134,4 +134,41 @@ public class MessageController {
 
         return customFileUtil.getFile(fileName);
     }
+
+    @GetMapping("/check/dm")
+    public ResponseEntity<Boolean> MessageImg(@RequestParam String targetUserId,
+                                              @RequestParam String userId){
+
+
+        try {
+            // 사용자 Plan 확인
+            boolean isTargetUserPlanValid = userService.findByUserId(targetUserId).getPlan().getPlanId() != 1;
+            boolean isUserPlanValid = userService.findByUserId(userId).getPlan().getPlanId() != 1;
+
+
+            // DM 존재 여부 확인
+            boolean isNewDMAllowed = messageService.checkDMCount(targetUserId)
+                    && messageService.checkDMCount(userId);
+
+            log.info("isTargetUserPlanValid : "+isTargetUserPlanValid);
+            log.info("isUserPlanValid : "+isUserPlanValid);
+            log.info("isNewDMAllowed : "+isNewDMAllowed);
+
+            // 최종 반환 조건
+            if (isNewDMAllowed) {
+                // DM 허용이 가능하면 Plan 상태에 상관없이 true 반환
+                return ResponseEntity.ok(true);
+            } else if (!isTargetUserPlanValid || !isUserPlanValid) {
+                // Plan이 유효하지 않고, DM 허용도 불가능한 경우 false 반환
+                return ResponseEntity.ok(false);
+            }
+            // 모든 조건 만족 시 true 반환
+            return ResponseEntity.ok(true);
+
+
+        } catch (Exception e) {
+            // 에러 발생 시 처리
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
+        }
+    }
 }
