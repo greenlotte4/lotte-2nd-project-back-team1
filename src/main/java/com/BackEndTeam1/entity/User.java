@@ -48,7 +48,7 @@ public class User {
     private String addr2;
 
     private String zipcode;
-
+    private String userStatus;
     private String status;
 
     @Column(name = "created_at")
@@ -57,8 +57,13 @@ public class User {
     @Column(name = "updated_at")
     private Timestamp updatedAt; // 로그인 날
 
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Builder.Default
     private List<Project> projects = new ArrayList<>();
+
+    public User(String userId) {
+        this.userId = userId;
+    }
 
 }

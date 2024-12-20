@@ -1,7 +1,9 @@
 package com.BackEndTeam1.config;
 
+import com.BackEndTeam1.dto.TaskDTO;
 import com.BackEndTeam1.dto.UserDTO;
 import com.BackEndTeam1.entity.ChatType;
+import com.BackEndTeam1.entity.Task;
 import com.BackEndTeam1.entity.User;
 import org.modelmapper.Converter;
 import org.modelmapper.ModelMapper;
@@ -32,6 +34,15 @@ public class RootConfig {
             public ChatType convert(MappingContext<String, ChatType> context) {
                 return ChatType.valueOf(context.getSource().toUpperCase());
             }
+        });
+
+        modelMapper.typeMap(User.class, String.class).setConverter(context -> {
+            User user = context.getSource();
+            return user != null ? user.getUserId() : null;
+        });
+
+        modelMapper.typeMap(Task.class, TaskDTO.class).addMappings(mapper -> {
+            mapper.map(src -> src.getAssignee().getUserId(), TaskDTO::setAssignee);
         });
 
         return modelMapper;

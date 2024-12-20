@@ -1,15 +1,14 @@
 package com.BackEndTeam1.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -34,11 +33,11 @@ public class CalendarEvent {
     private String content;
 
     @Column(name = "start_date")
-    private LocalDate startDate;
+    private LocalDateTime startDate;
 
     @Column(name = "end_date")
-    private LocalDate endDate;
-
+    private LocalDateTime endDate;
+    private Boolean allDay;
     private Boolean notification;
 
     @Column(name = "created_at")
@@ -46,5 +45,6 @@ public class CalendarEvent {
 
     @Column(name = "updated_at")
     private Timestamp updatedAt;
+
 }
 

@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.sql.Date;
 import java.sql.Timestamp;
 
 @Getter
@@ -21,8 +22,8 @@ public class Task {
     @Column(name = "task_id")
     private Long taskId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_item_id")
+    @ManyToOne
+    @JoinColumn(name = "project_item_id", nullable = false)
     private ProjectItem projectItem;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -40,10 +41,10 @@ public class Task {
 
     // Task 시작일자
     @Column(name = "start_date")
-    private Timestamp startDate;
+    private Date startDate;
     // Task 종료일자
     @Column(name = "end_date")
-    private Timestamp endDate;
+    private Date endDate;
 
     @Column(name = "created_at")
     private Timestamp createdAt;
@@ -51,8 +52,8 @@ public class Task {
     @Column(name = "updated_at")
     private Timestamp updatedAt;
 
-    public void setAsignee(User assignee) {
-        this.assignee = assignee;
+    public void setAsignee(String assignee) {
+        this.assignee = User.builder().userId(assignee).build();
     }
 
     public void setName(String name) {
@@ -70,5 +71,9 @@ public class Task {
     public void setStatus(String status) {
         this.status = status;
     }
+
+    public void setStartDate(Date startDate) {this.startDate = startDate;}
+
+    public void setEndDate(Date endDate) {this.endDate = endDate;}
 }
 

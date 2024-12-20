@@ -56,4 +56,17 @@ public class MessageService {
         }
         return chatRoomDTOS;
     }
+    public List<ChatRoomDTO> findByChatId(Integer chatId) {
+        List<ChatRoom> chatRoomList = chatRoomRepository.findByChatChatId(chatId);
+        List<ChatRoomDTO> chatRoomDTOS = new ArrayList<>();
+        for (ChatRoom chatRoom : chatRoomList) {
+            chatRoomDTOS.add(modelMapper.map(chatRoom, ChatRoomDTO.class));
+        }
+        return chatRoomDTOS;
+    }
+
+    public boolean checkDMCount(String userId) {
+        int chatRoomCount = chatRoomRepository.countByDMAndUserId(userId);
+        return chatRoomCount < 3;
+    }
 }

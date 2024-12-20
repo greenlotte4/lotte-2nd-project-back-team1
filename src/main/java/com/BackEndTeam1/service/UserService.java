@@ -1,5 +1,6 @@
 package com.BackEndTeam1.service;
 
+import com.BackEndTeam1.document.UserLoginDocument;
 import com.BackEndTeam1.dto.PageRequestDTO;
 import com.BackEndTeam1.dto.PageResponseDTO;
 import com.BackEndTeam1.dto.PlanHistoryDTO;
@@ -10,6 +11,7 @@ import com.BackEndTeam1.entity.User;
 import com.BackEndTeam1.repository.PlanHistoryRepository;
 import com.BackEndTeam1.repository.PlanRepository;
 import com.BackEndTeam1.repository.UserRepository;
+import com.BackEndTeam1.repository.mongo.UserLoginRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
@@ -51,7 +53,7 @@ public class UserService {
     private final PlanHistoryService planHistoryService;
     private final PlanRepository planRepository;
     private final PlanHistoryRepository planHistoryRepository;
-
+    private final UserLoginRepository userLoginRepository;
     public UserDTO saveUser(UserDTO userDTO){
         User user = modelMapper.map(userDTO, User.class);
         //패스워드 암호화 할때 config(RootConfig)에 직접 매핑해줘야함
@@ -73,7 +75,6 @@ public class UserService {
         if (user.isEmpty()) {
             throw new RuntimeException("User not found with ID: " + userId);
         }
-        log.info("user.get().getCreatedAt()" + user.get().getCreatedAt());
         return modelMapper.map(user.get(), UserDTO.class);
     }
 
@@ -188,7 +189,7 @@ public class UserService {
             throw new RuntimeException("사용자 삭제 중 오류 발생: " + e.getMessage());
         }
     }
-
+ 
     public void updateUsers(List<Map<String, Object>> userUpdates) {
         for (Map<String, Object> update : userUpdates) {
             log.info("start");
@@ -271,9 +272,36 @@ public class UserService {
         User savedUser = userRepository.save(user);
         return modelMapper.map(savedUser, UserDTO.class);
     }
-
+    public UserDTO deleteUser(String userId){
+        Optional<User> userDTO = userRepository.findByUserId(userId);
+        User user = modelMapper.map(userDTO, User.class);
+        user.setStatus("DELETED");
+        User savedUser = userRepository.save(user);
+        return modelMapper.map(savedUser, UserDTO.class);
+    }
     public User findEntityByUserId(String userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+    }
+
+    public String findProfileUrl(String userId) {
+        Optional<User> userOpt = userRepository.findByUserId(userId);
+        log.info("요청온 유저아이디2: " + userId);
+        User user = userOpt.get();
+        return user.getProfile(); // 프로필 URL 반환
+    }
+
+    public UserDTO loginStatusChange(String userId, String userStatus ) {
+        Optional<User> userOpt = userRepository.findByUserId(userId);
+        User user = userOpt.get();
+        user.setUserStatus(userStatus);
+        User savedUser = userRepository.save(user);
+        return modelMapper.map(savedUser, UserDTO.class);
+    }
+
+    public String selectStatus(String userId) {
+        Optional<UserLoginDocument> userOpt = userLoginRepository.findByUserId(userId);
+        UserLoginDocument user = userOpt.get();
+        return user.getCurrentStatus();
     }
 }

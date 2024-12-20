@@ -1,11 +1,13 @@
 package com.BackEndTeam1.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -39,6 +41,7 @@ public class BoardArticle {
 
     @ManyToOne
     @JoinColumn(name = "board_id")
+    @JsonIgnore
     private Board board;
 
     @Column(nullable = false, length = 20)
@@ -52,5 +55,21 @@ public class BoardArticle {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User deletedBy; // 삭제자
 
+    @OneToMany(mappedBy = "boardArticle", cascade = CascadeType.ALL, fetch = FetchType.LAZY) // BoardFile과 연관 설정
+    private List<BoardFile> files; // 게시글에 첨부된 파일들
 
+    @Column(name = "must_read", nullable = false)
+    private Boolean mustRead = false; // 필독 여부 (기본값: false)
+
+    @Column(name = "notification", nullable = false)
+    private Boolean notification = false;
+
+    @OneToMany(mappedBy = "article", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ImportantArticle> importantArticles;
+
+
+
+    public BoardArticle(Long articleId) {
+        this.id = articleId;
+    }
 }

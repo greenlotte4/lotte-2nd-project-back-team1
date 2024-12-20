@@ -22,6 +22,4 @@ public class Chat {
 
     @Enumerated(EnumType.STRING)
     private ChatType dtype; // Enum: channel, dm
-
 }
-

@@ -30,7 +30,9 @@ spring:
 
   servlet:
     multipart:
-      max-file-size: 10MB
+      max-file-size: 10MB     # 업로드 파일의 최대 크기
+      max-request-size: 15MB  # 요청 전체 크기
+      location: uploads/
   mail:
     host: smtp.gmail.com
     port: 587
@@ -66,7 +68,9 @@ spring:
 jwt:
     issuer: chhak0503@gmail.com
     secret: Tz6W1F4Cl4Yl2GyyRjJ5C4v7KRMCA4z4
+
 file:
   upload:
     path: upload
+
 
