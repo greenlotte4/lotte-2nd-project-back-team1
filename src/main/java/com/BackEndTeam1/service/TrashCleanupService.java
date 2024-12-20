@@ -18,10 +18,10 @@ public class TrashCleanupService {
 
     private final BoardArticleRepository boardArticleRepository;
 
-    @Scheduled(cron = "0 0 3 * * ?") // 매일 새벽 3시에 실행
+    @Scheduled(cron = "0 * * * * ?") // 매일 새벽 3시에 실행
     @Transactional
     public void cleanOldTrashArticles() {
-        LocalDateTime thresholdDate = LocalDateTime.now().minusDays(30);
+        LocalDateTime thresholdDate = LocalDateTime.now().minusMinutes(1);
         List<BoardArticle> articlesToDelete = boardArticleRepository.findByStatusAndTrashDateBefore("trash", thresholdDate);
 
         if (!articlesToDelete.isEmpty()) {

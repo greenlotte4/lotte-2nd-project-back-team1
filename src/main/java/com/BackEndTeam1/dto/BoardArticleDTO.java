@@ -1,10 +1,12 @@
 package com.BackEndTeam1.dto;
 
 import com.BackEndTeam1.entity.Board;
+import com.BackEndTeam1.entity.BoardArticle;
 import com.BackEndTeam1.entity.User;
 import lombok.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -51,4 +53,21 @@ public class BoardArticleDTO {
         this.notification = notification != null ? notification : true;
     }
 
+    public BoardArticleDTO(BoardArticle article) {
+        this.id = Math.toIntExact(article.getId());
+        this.title = article.getTitle();
+        this.content = article.getContent();
+        this.boardName = article.getBoard().getBoardName();
+        this.createdAt = article.getCreatedAt().toString();
+        this.updatedAt = article.getUpdatedAt().toString();
+        this.userName = article.getAuthor().getUsername();
+        this.userId = article.getAuthor().getUserId().toString();
+        this.trashDate = article.getTrashDate() != null ? article.getTrashDate().toString() : null;
+        this.deletedBy = article.getDeletedBy() != null ? article.getDeletedBy().getUsername() : null;
+        this.status = article.getStatus();
+        this.isImportant = article.getMustRead(); // 필독 여부를 isImportant에 매핑
+        this.mustRead = article.getMustRead();
+        this.notification = article.getNotification();
+
+    }
 }
