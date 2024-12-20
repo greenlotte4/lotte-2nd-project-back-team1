@@ -1,7 +1,12 @@
 package com.BackEndTeam1.service;
 
+import com.BackEndTeam1.entity.Drive;
 import com.BackEndTeam1.entity.DriveFile;
+import com.BackEndTeam1.entity.Folder;
 import com.BackEndTeam1.entity.User;
+import com.BackEndTeam1.repository.DriveFileRepository;
+import com.BackEndTeam1.repository.DriveRepository;
+import com.BackEndTeam1.repository.FolderRepository;
 import com.BackEndTeam1.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,12 +18,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class FileService {
 
+    private final DriveRepository driveRepository;
+    private final FolderRepository folderRepository;
+    private final DriveFileRepository driveFileRepository;
     @Value("${file.upload.path}")
     private String uploadDir;  // application.yml에서 경로 설정
 
@@ -47,20 +58,57 @@ public class FileService {
         return fileDownloadUri;
     }
 
-    public String uploadFiles(String userId, MultipartFile file) throws IOException {
-        String fileName = UUID.randomUUID().toString() + "-" + file.getOriginalFilename();
-        // 파일 저장 위치 설정
-        Path targetLocation = Paths.get(uploadDir, fileName);
-        // 파일을 지정된 위치에 저장
-        Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-        // 파일의 다운로드 URL 생성
-        String baseUrl = "https://hubflow.store/user/thumb/";
+    public List<String> uploadFiles(String userId, Integer folderId, Integer driveId, MultipartFile[] files) throws IOException {
+        // 사용자 정보 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
-        String filesURL = "/user/thumb/" + fileName;
-        String uploadFiles = baseUrl + fileName;
+        // 드라이브 정보 조회
+        Drive drive = driveRepository.findById(driveId)
+                .orElseThrow(() -> new RuntimeException("드라이브를 찾을 수 없습니다."));
 
-//        DriveFile driveFile = ();
+        // 폴더 정보 조회
+        Folder folder = folderRepository.findById(folderId)
+                .orElseThrow(() -> new RuntimeException("폴더를 찾을 수 없습니다."));
 
-        return filesURL;
+        List<String> uploadedFileUrls = new ArrayList<>(); // 업로드된 파일 URL을 저장할 리스트
+
+        // 여러 파일을 처리하기 위해 반복문 사용
+        for (MultipartFile file : files) {
+            // 파일 이름을 고유하게 생성
+            String fileName = UUID.randomUUID().toString() + "-" + file.getOriginalFilename();
+
+            // 파일 저장 위치 설정
+            Path targetLocation = Paths.get(uploadDir, fileName);
+
+            // 파일을 지정된 위치에 저장
+            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+
+            // 파일의 다운로드 URL 생성
+            String baseUrl = "https://hubflow.store/user/thumb/";
+            String fileUrl = baseUrl + fileName;
+
+            // DriveFile 객체 생성
+            DriveFile driveFile = DriveFile.builder()
+                    .drive(drive)  // 드라이브
+                    .folder(folder)  // 폴더
+                    .createdUser(user)  // 파일을 업로드한 사용자
+                    .fileOriginalName(file.getOriginalFilename())  // 원본 파일 이름
+                    .fileStoredName(fileName)  // 저장된 파일 이름
+                    .fileSize((int) file.getSize())  // 파일 크기 (단위: 바이트)
+                    .fileType(file.getContentType())  // 파일 타입 (MIME 타입)
+                    .createdAt(new Timestamp(System.currentTimeMillis()))  // 생성 시간
+                    .updatedAt(new Timestamp(System.currentTimeMillis()))  // 수정 시간
+                    .build();
+
+            // 파일 정보 데이터베이스에 저장
+            driveFileRepository.save(driveFile);
+
+            // 업로드된 파일 URL 리스트에 추가
+            uploadedFileUrls.add(fileUrl);
+        }
+
+        // 업로드된 파일들의 URL 리스트 반환
+        return uploadedFileUrls;
     }
 }

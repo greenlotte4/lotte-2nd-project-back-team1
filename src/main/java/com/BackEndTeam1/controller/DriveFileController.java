@@ -1,5 +1,6 @@
 package com.BackEndTeam1.controller;
 
+import com.BackEndTeam1.dto.DriveItem;
 import com.BackEndTeam1.dto.FolderRequestDTO;
 import com.BackEndTeam1.dto.FolderResponseDTO;
 import com.BackEndTeam1.entity.DriveFile;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -38,14 +40,21 @@ public class DriveFileController {
 
     // 파일 업로드
     @PostMapping("/upload")
-    public ResponseEntity<String> uploadFile(@RequestParam("userId") String userId, @RequestParam("files") MultipartFile files) {
-        log.info("Uploading file");
+    public String uploadFile(
+            @RequestParam("files") MultipartFile[] file,  // 여러 파일을 받을 때
+            @RequestParam("folderId") Integer folderId,      // 폴더 ID
+            @RequestParam("driveId") Integer driveId,        // 드라이브 ID
+            @RequestParam("userId") String userId           // 사용자 ID
+    ) {
         try {
-            // 서비스 호출
-            String fileDownloadUri = fileService.uploadProfileImage(userId, files);
-            return ResponseEntity.status(HttpStatus.OK).body(fileDownloadUri); // 성공 시 이미지 URL 반환
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("업로드 실패: " + e.getMessage());
+            // 파일 업로드 처리 및 데이터베이스 저장
+            List<String> fileUrl = fileService.uploadFiles(userId, folderId, driveId, file);
+
+            // 업로드 성공 메시지 반환
+            return "파일 업로드 성공: " + fileUrl;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "파일 업로드 실패: " + e.getMessage();
         }
     }
 
@@ -55,13 +64,19 @@ public class DriveFileController {
         String userId = requestBody.get("userId");
         String folderName = requestBody.get("folderName");
         String driveId = requestBody.get("driveId");
-        log.info("폴더이름" + folderName);
-        log.info("드라이브타입" + driveId);
-        log.info("아이디" + userId);
-
+        Integer folderId = null;
+        try {
+            String folderIdStr = requestBody.get("folderId");
+            if (folderIdStr != null && !folderIdStr.isEmpty()) {
+                folderId = Integer.valueOf(folderIdStr);  // Null과 빈 문자열을 체크한 후 숫자로 변환
+            }
+        } catch (NumberFormatException e) {
+            log.error("폴더 ID 변환 실패", e); // 예외 로깅
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid folderId");
+        }
         boolean isShared = "2".equals(driveId);  // 2이면 공유 드라이브, 1이면 개인 드라이브
 
-        return ResponseEntity.status(HttpStatus.OK).body(driveFileService.createFolder(userId,folderName,isShared));
+        return ResponseEntity.status(HttpStatus.OK).body(driveFileService.createFolder(userId,folderName,isShared,folderId));
     }
 
 
@@ -70,6 +85,20 @@ public class DriveFileController {
     public ResponseEntity<List<DriveFile>> getAllFiles() {
         List<DriveFile> files = driveFileService.getAllFiles();
         return ResponseEntity.ok(files);
+    }
+    @PostMapping("/select/driveData")
+    public ResponseEntity<List<Folder>> selectDriveUser(
+            @RequestParam("driveId") Integer driveId,
+            @RequestParam("userId") String userId){
+        log.info("드라이브 요청");
+        try {
+            // 드라이브 및 폴더, 파일 목록 가져오기
+            List<Folder> folders = driveFileService.getUserFoldersWithFiles(userId, driveId);
+            return ResponseEntity.status(HttpStatus.OK).body(folders);
+        } catch (RuntimeException e) {
+            // 예외 처리 (드라이브를 찾을 수 없는 경우)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
     }
 
     // 파일 상세 조회
@@ -85,5 +114,17 @@ public class DriveFileController {
     public ResponseEntity<Void> deleteFile(@PathVariable Integer fileId) {
         driveFileService.deleteFile(fileId);
         return ResponseEntity.noContent().build();
+    }
+
+    // 자식 폴더 조회
+    @PostMapping("/child/folder")
+    public ResponseEntity<List<Folder>> getChildFolders(@RequestBody FolderRequestDTO folderRequest) {
+        try {
+            // 요청받은 folderId에 대해 자식 폴더 조회
+            List<Folder> childFolders = driveFileService.getChildFolders(folderRequest.getFolderId());
+            return ResponseEntity.ok(childFolders);
+        } catch (Exception e) {
+            return ResponseEntity.status(404).body(null);  // 폴더를 찾을 수 없으면 404 반환
+        }
     }
 }

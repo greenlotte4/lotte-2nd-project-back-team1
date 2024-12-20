@@ -1,17 +1,20 @@
 package com.BackEndTeam1.service;
 
+
 import com.BackEndTeam1.entity.Drive;
 import com.BackEndTeam1.entity.DriveFile;
 import com.BackEndTeam1.entity.Folder;
 import com.BackEndTeam1.repository.DriveFileRepository;
 import com.BackEndTeam1.repository.DriveRepository;
 import com.BackEndTeam1.repository.FolderRepository;
+import jakarta.mail.FolderNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -66,6 +69,29 @@ public class DriveFileService {
         return driveFileRepository.findAll();
     }
 
+    public List<Folder> getUserFoldersWithFiles(String userId, Integer driveId) {
+        Drive drive = driveRepository.findById(driveId)
+                .orElseThrow(() -> new RuntimeException("드라이브를 찾을 수 없습니다."));
+
+        List<Folder> folders;
+
+        if (driveId == 1) { // 내 드라이브 (자신이 만든 폴더 및 파일)
+            folders = folderRepository.findByDrive_DriveIdAndCreatedUser_UserIdAndParentFolder_FolderIdIsNull(driveId, userId);
+        } else if (driveId == 2) { // 공유 드라이브
+            folders = folderRepository.findByDrive_DriveIdAndIsDeletedFalseAndParentFolder_FolderIdIsNull(driveId);
+        } else {
+            throw new RuntimeException("잘못된 드라이브 ID입니다.");
+        }
+
+        // 각 폴더에 해당하는 파일 리스트를 추가
+        for (Folder folder : folders) {
+            List<DriveFile> files = driveFileRepository.findByFolder_FolderId(folder.getFolderId());
+            folder.setDriveFiles(files);
+        }
+
+        return folders;
+    }
+
     // 파일 상세 조회
     public Optional<DriveFile> getFileById(Integer fileId) {
         return driveFileRepository.findById(fileId);
@@ -87,29 +113,44 @@ public class DriveFileService {
 
 
     // 폴더생성
-    public Folder createFolder( String userId, String folderName, boolean isShared) {
+    public Folder createFolder( String userId, String folderName, boolean isShared, Integer  folderId) {
         log.info("폴더이름" + folderName);
         log.info("드라이브타입" + isShared);
         log.info("아이디" + userId);
         // 드라이브 타입 설정 (공유/개인)
         Drive.DriveType driveType = isShared ? Drive.DriveType.SHARED : Drive.DriveType.PERSONAL;
-
         // 드라이브 찾기 (유저의 드라이브 타입에 맞는 드라이브를 찾음)
         Drive drive = driveRepository.findByDriveTypeAndUser_UserId(driveType, userId)
                 .orElseThrow(() -> new RuntimeException("사용자의 드라이브를 찾을 수 없습니다. userId: " + userId + ", driveType: " + driveType));
 
+        Folder parentFolder = null;
+        if (folderId != null) {
+            parentFolder = folderRepository.findById(folderId)
+                    .orElseThrow(() -> new RuntimeException("부모 폴더를 찾을 수 없습니다. folderId: " + folderId));
+        }
         // 폴더 객체 생성
         Folder folder = Folder.builder()
                 .drive(drive)  // 해당 드라이브에 폴더 연결
                 .name(folderName)  // 폴더 이름 설정
+                .parentFolder(parentFolder)
                 .createdAt(new Timestamp(System.currentTimeMillis()))  // 생성 시간
                 .updatedAt(new Timestamp(System.currentTimeMillis()))  // 업데이트 시간
                 .createdUser(drive.getUser())
                 .isDeleted(false)  // 삭제 여부
                 .isShared(isShared)
+                .type("folder")
                 .build();
 
         // 폴더 저장
         return folderRepository.save(folder);  // 폴더를 DB에 저장
     }
+
+    public List<Folder> getChildFolders(Integer folderId) {
+        Folder parentFolder = folderRepository.findById(folderId).orElse(null);
+        if(parentFolder == null) {
+            log.info("파일이 읍다");
+        }
+        return folderRepository.findByParentFolder(parentFolder);
+    }
+
 }

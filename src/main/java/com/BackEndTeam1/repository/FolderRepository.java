@@ -19,8 +19,25 @@ import java.util.Optional;
 */
 @Repository
 public interface FolderRepository extends JpaRepository<Folder, Integer> {
+
+   /* // 특정 드라이브의 모든 폴더 조회
     List<Folder> findByDrive(Drive drive);
+
+    // 폴더명으로 폴더 조회
     List<Folder> findByName(String folderName);
 
-    List<Folder> findByIsDeletedFalse();
+    // 드라이브 ID로 폴더 조회
+    List<Folder> findByDrive_DriveId(Integer driveId);
+
+    // 삭제되지 않은 폴더 조회
+    List<Folder> findByIsDeletedFalse();*/
+
+    List<Folder> findByParentFolder(Folder parentFolder);
+
+    // 내 드라이브에서 부모 폴더가 null인 폴더들만 조회
+    List<Folder> findByDrive_DriveIdAndCreatedUser_UserIdAndParentFolder_FolderIdIsNull(Integer driveId, String userId);
+
+    // 공유 드라이브에서 부모 폴더가 null인 폴더들만 조회
+    List<Folder> findByDrive_DriveIdAndIsDeletedFalseAndParentFolder_FolderIdIsNull(Integer driveId);
+
 }
