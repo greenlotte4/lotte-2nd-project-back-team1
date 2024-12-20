@@ -62,11 +62,20 @@ public class TaskService {
             existingTask.setPriority(taskDTO.getPriority());
         }
         if (taskDTO.getAssignee() != null) {
-            // `User` 엔티티를 데이터베이스에서 조회하여 영속 상태로 만듦
-            User assignee = userRepository.findById(taskDTO.getAssignee())
-                    .orElseThrow(() -> new RuntimeException("User ID를 찾을 수 없습니다: " + taskDTO.getAssignee()));
-            existingTask.setAsignee(assignee.getUserId()); // 영속 상태의 `User` 설정
+            User assignee;
+            try {
+                // Assignee가 ID일 경우
+                String assigneeId = taskDTO.getAssignee();
+                assignee = userRepository.findById(assigneeId)
+                        .orElseThrow(() -> new RuntimeException("User ID를 찾을 수 없습니다: " + taskDTO.getAssignee()));
+            } catch (NumberFormatException e) {
+                // Assignee가 이름일 경우
+                assignee = userRepository.findByUsername(taskDTO.getAssignee())
+                        .orElseThrow(() -> new RuntimeException("User 이름을 찾을 수 없습니다: " + taskDTO.getAssignee()));
+            }
+            existingTask.setAsignee(assignee.getUserId());
         }
+
 
         return taskRepository.save(existingTask);
     }
