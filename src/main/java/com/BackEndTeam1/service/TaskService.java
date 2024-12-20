@@ -1,8 +1,10 @@
 package com.BackEndTeam1.service;
 
 import com.BackEndTeam1.dto.TaskDTO;
+import com.BackEndTeam1.entity.ProjectItem;
 import com.BackEndTeam1.entity.Task;
 import com.BackEndTeam1.entity.User;
+import com.BackEndTeam1.repository.ProjectItemRepository;
 import com.BackEndTeam1.repository.TaskRepository;
 import com.BackEndTeam1.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TaskService {
 
+    private final ProjectItemRepository projectItemRepository;
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
@@ -69,8 +72,6 @@ public class TaskService {
     }
 
 
-
-
     //삭제
     public void delete(Long id) {
         taskRepository.deleteById(id);
@@ -80,4 +81,22 @@ public class TaskService {
         Object tasks = taskRepository.findAllByProjectItem_ProjectItemId(projectItemId);
         return tasks;
     }
+
+    
+    // task 이동
+    public Task updateTaskGroup(Long taskId, Long groupId) {
+        if (groupId == null) {
+            throw new IllegalArgumentException("Group ID가 null입니다.");
+        }
+
+        Task existingTask = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task ID를 찾을 수 없습니다: " + taskId));
+
+        ProjectItem projectItem = projectItemRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("ProjectItem ID를 찾을 수 없습니다: " + groupId));
+
+        existingTask.setProjectItem(projectItem);
+        return taskRepository.save(existingTask);
+    }
+
 }
