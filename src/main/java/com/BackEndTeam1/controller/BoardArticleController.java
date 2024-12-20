@@ -282,7 +282,9 @@ public class BoardArticleController {
         Page<BoardArticleDTO> articlePage = boardArticleService.getArticlesByBoard(boardId, page, size);
 
         // boardId로 boardName 조회
-        String boardName = boardService.getBoardNameById(boardId);
+        String boardName = boardService.getBoardNameById(boardId)
+                .describeConstable().orElseThrow(() -> new IllegalArgumentException("Invalid board ID: " + boardId));
+
 
         // 응답 데이터 구성
         Map<String, Object> response = new HashMap<>();

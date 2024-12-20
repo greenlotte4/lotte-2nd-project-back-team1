@@ -49,4 +49,6 @@ public interface BoardArticleRepository extends JpaRepository<BoardArticle, Inte
     List<BoardArticle> findTop10ByStatusOrderByCreatedAtDesc(Pageable pageable);
 
 
+
+
 }
