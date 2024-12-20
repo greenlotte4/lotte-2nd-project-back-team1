@@ -1,5 +1,6 @@
 package com.BackEndTeam1.service;
 
+import com.BackEndTeam1.document.UserLoginDocument;
 import com.BackEndTeam1.dto.PageRequestDTO;
 import com.BackEndTeam1.dto.PageResponseDTO;
 import com.BackEndTeam1.dto.PlanHistoryDTO;
@@ -10,6 +11,7 @@ import com.BackEndTeam1.entity.User;
 import com.BackEndTeam1.repository.PlanHistoryRepository;
 import com.BackEndTeam1.repository.PlanRepository;
 import com.BackEndTeam1.repository.UserRepository;
+import com.BackEndTeam1.repository.mongo.UserLoginRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
@@ -51,7 +53,7 @@ public class UserService {
     private final PlanHistoryService planHistoryService;
     private final PlanRepository planRepository;
     private final PlanHistoryRepository planHistoryRepository;
-
+    private final UserLoginRepository userLoginRepository;
     public UserDTO saveUser(UserDTO userDTO){
         User user = modelMapper.map(userDTO, User.class);
         //패스워드 암호화 할때 config(RootConfig)에 직접 매핑해줘야함
@@ -298,8 +300,8 @@ public class UserService {
     }
 
     public String selectStatus(String userId) {
-        Optional<User> userOpt = userRepository.findByUserId(userId);
-        User user = userOpt.get();
-        return user.getUserStatus();
+        Optional<UserLoginDocument> userOpt = userLoginRepository.findByUserId(userId);
+        UserLoginDocument user = userOpt.get();
+        return user.getCurrentStatus();
     }
 }

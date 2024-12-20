@@ -28,10 +28,7 @@ public class UserLoginService {
         log.info("status : "+status);
         status.setCurrentStatus(currentStatus);
         status.setLastUpdated(LocalDateTime.now());
-        status.setRoomname(roomNames);
-        status.setTeamid(teamId);
         status.setProfileimg(userprofile);
-        status.setUsername(username);
         userLoginRepository.save(status);
     }
 

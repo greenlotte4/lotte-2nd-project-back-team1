@@ -9,6 +9,7 @@ import com.BackEndTeam1.entity.TeamSpaceMember;
 import com.BackEndTeam1.entity.User;
 import com.BackEndTeam1.repository.TeamSpaceMemberRepository;
 import com.BackEndTeam1.repository.mongo.UserLoginRepository;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -61,50 +62,57 @@ public class TeamSpaceMemberService {
     }
 
     public List<TeamSpaceUsersDto> getUsersInTeamSpacesByUserId(String userId) {
-        // 1. MongoDB에서 UserLoginDocument 조회
-        UserLoginDocument userLoginDocument = userLoginRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with userId: " + userId));
+        // 1. 아이디와 일치하는 팀스페이스 조회
+        List<TeamSpaceMember> userTeamSpaces = teamSpaceMemberRepository.findByUser_UserId(userId);
 
-        // 2. 사용자의 teamid 리스트 가져오기
-        List<Long> teamIds = userLoginDocument.getTeamid();
-        List<String> roomNames = userLoginDocument.getRoomname();
+        // 2. 일치한 팀스페이스 아이디 추출
+        List<Long> teamSpaceIds = userTeamSpaces.stream()
+                .map(tsm -> tsm.getTeamSpace().getTeamSpaceId())
+                .distinct()
+                .toList();
 
-        if (teamIds == null || teamIds.isEmpty()) {
-            return List.of(); // 팀이 없으면 빈 리스트 반환
+        // 팀스페이스가 없는 경우 빈 리스트 반환
+        if (teamSpaceIds.isEmpty()) {
+            return List.of();
         }
 
-        // 3. MongoDB에서 teamid에 해당하는 UserLoginDocuments 조회
-        List<UserLoginDocument> membersInTeams = userLoginRepository.findByTeamidIn(teamIds);
+        // 3. UserLoginDocument 조회 (중복 키 처리 추가)
+        Map<String, String> userStatusMap = teamSpaceMemberRepository.findByTeamSpace_TeamSpaceIdIn(teamSpaceIds).stream()
+                .map(TeamSpaceMember::getUser)
+                .filter(user -> !user.getUserId().equals(userId)) // 나 자신 제외
+                .map(user -> {
+                    UserLoginDocument status = userLoginRepository.findByUserId(user.getUserId())
+                            .orElse(null);
+                    return Map.entry(user.getUserId(), status != null ? status.getCurrentStatus() : "offline");
+                })
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (existing, replacement) -> replacement // 중복 발생 시 새로운 값으로 대체
+                ));
 
-        // 4. 팀별로 사용자 데이터 그룹화
-        Map<Long, List<UserLoginDocument>> teamToMembersMap = membersInTeams.stream()
-                .flatMap(doc -> doc.getTeamid().stream().map(teamId -> Map.entry(teamId, doc))) // 각 팀 아이디에 대해 UserLoginDocument 매핑
-                .collect(Collectors.groupingBy(Map.Entry::getKey, // 팀 아이디로 그룹화
-                        Collectors.mapping(Map.Entry::getValue, Collectors.toList()))); // UserLoginDocument 리스트 생성
+        // 4. 팀스페이스와 일치하는 모든 멤버 조회
+        List<TeamSpaceMember> allMembersInMyTeamSpaces = teamSpaceMemberRepository.findByTeamSpace_TeamSpaceIdIn(teamSpaceIds);
 
+        // 5. 팀스페이스별로 그룹
+        Map<TeamSpace, List<TeamSpaceMember>> teamToMembersMap = allMembersInMyTeamSpaces.stream()
+                .filter(tsm -> !tsm.getUser().getUserId().equals(userId)) // 나 자신 제외
+                .collect(Collectors.groupingBy(TeamSpaceMember::getTeamSpace));
 
-        // 5. DTO로 변환
+        // 6. Map을 DTO 형태로 변환
         return teamToMembersMap.entrySet().stream()
                 .map(entry -> {
-                    Long teamSpaceId = entry.getKey();
-                    List<UserLoginDocument> members = entry.getValue();
-
-                    // roomname 매칭
-                    int index = teamIds.indexOf(teamSpaceId);
-                    String roomName;
-                    if (index >= 0 && index < roomNames.size()) {
-                        roomName = roomNames.get(index);
-                    } else {
-                        throw new IllegalStateException("Room name not found for teamSpaceId: " + teamSpaceId);
-                    }
-
-                    // 사용자 DTO 리스트 생성 - 나 자신 제외
-                    List<UserDTO> userDtos = members.stream()
-                            .filter(member -> !member.getUserId().equals(userId)) // 나 자신 제외
-                            .map(member -> new UserDTO(member.getUserId(), member.getUsername()))
+                    TeamSpace teamSpace = entry.getKey();
+                    List<UserDTO> userDtos = entry.getValue().stream()
+                            .map(TeamSpaceMember::getUser)
+                            .map(user -> new UserDTO(
+                                    user.getUserId(),
+                                    user.getUsername(),
+                                    userStatusMap.getOrDefault(user.getUserId(), "offline") // 상태 추가
+                            ))
                             .toList();
 
-                    return new TeamSpaceUsersDto(teamSpaceId, roomName, userDtos);
+                    return new TeamSpaceUsersDto(teamSpace.getTeamSpaceId(), teamSpace.getRoomname(), userDtos);
                 })
                 .toList();
     }
