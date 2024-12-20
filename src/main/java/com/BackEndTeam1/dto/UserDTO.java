@@ -56,4 +56,11 @@ public class UserDTO {
         this.username = username;
         this.userStatus = userStatus;
     }
+
+    public UserDTO(String userId, String username, String profile, String userStatus) {
+        this.userId = userId;
+        this.username = username;
+        this.profile = profile;
+        this.userStatus = userStatus;
+    }
 }
