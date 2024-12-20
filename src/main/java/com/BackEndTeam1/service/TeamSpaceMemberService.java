@@ -125,6 +125,7 @@ public class TeamSpaceMemberService {
                             .map(user -> new UserDTO(
                                     user.getUserId(),
                                     user.getUsername(),
+                                    user.getProfile(),
                                     userStatusMap.getOrDefault(user.getUserId(), "offline")
                             ))
                             .toList();
