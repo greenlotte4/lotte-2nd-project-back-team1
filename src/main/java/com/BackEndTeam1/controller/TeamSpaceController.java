@@ -32,39 +32,70 @@ public class TeamSpaceController {
 
     //방생성
     @PostMapping("/maketeam")
-    public ResponseEntity<TeamSpace> makeTeamSpace(
-            @RequestBody Map<String, Object> TeamSpaces) {
-        String roomname = (String) TeamSpaces.get("roomName");
-        String userId = (String) TeamSpaces.get("userId");
+    public ResponseEntity<?> makeTeamSpace(@RequestBody Map<String, Object> teamSpaces) {
+        try {
+            // 요청 데이터 가져오기
+            String roomName = (String) teamSpaces.get("roomName");
+            String userId = (String) teamSpaces.get("userId");
 
-        LocalDate today = LocalDate.now();
-        LocalDate oneMonthLater = today.plusMonths(1);
+            if (roomName == null || roomName.isBlank()) {
+                return ResponseEntity.badRequest().body("방 이름은 필수입니다.");
+            }
 
-        User user = userService.findEntityByUserId(userId);
+            if (userId == null || userId.isBlank()) {
+                return ResponseEntity.badRequest().body("유저 ID는 필수입니다.");
+            }
 
-        String serialNumber;
+            // 날짜 생성
+            LocalDate today = LocalDate.now();
+            LocalDate oneMonthLater = today.plusMonths(1);
 
-        do {
-            serialNumber = generateSerialNumber();
-        } while (teamSpaceService.serialNumberExists(serialNumber)); // 중복 확인
+            // 사용자 조회
+            User user = userService.findEntityByUserId(userId);
 
-        TeamSpace teamSpace = TeamSpace.builder()
-                .roomname(roomname)
-                .serialnumber(serialNumber)
-                .endDate(oneMonthLater)
-                .user(user)
-                .build();
-        log.info("teamSpace.toString() : " + teamSpace.getRoomname());
-        teamSpaceService.save(teamSpace); // DB에 저장
+            // 고유 serialNumber 생성 및 중복 확인
+            String serialNumber;
+            do {
+                serialNumber = generateSerialNumber();
+            } while (teamSpaceService.serialNumberExists(serialNumber));
 
-        TeamSpaceMember teamSpaceMember = TeamSpaceMember.builder()
-                .teamSpace(teamSpace)
-                .user(user)
-                .build();
-        log.info("teamSpaceMember.toString() : " + teamSpaceMember.getUser());
-        teamSpaceMemberService.membersave(teamSpaceMember);
-        return ResponseEntity.ok(teamSpace);
+            // TeamSpace 생성
+            TeamSpace teamSpace = TeamSpace.builder()
+                    .roomname(roomName)
+                    .serialnumber(serialNumber)
+                    .endDate(oneMonthLater)
+                    .user(user)
+                    .build();
+
+            // TeamSpace 저장
+            teamSpaceService.save(teamSpace);
+
+            // TeamSpaceMember 생성 및 저장
+            TeamSpaceMember teamSpaceMember = TeamSpaceMember.builder()
+                    .teamSpace(teamSpace)
+                    .user(user)
+                    .build();
+            teamSpaceMemberService.membersave(teamSpaceMember);
+
+            // 성공적으로 생성된 TeamSpace 반환
+            return ResponseEntity.ok(teamSpace);
+
+        } catch (IllegalArgumentException e) {
+            // 유효하지 않은 사용자 ID 예외 처리
+            log.error("유효하지 않은 사용자 ID: " + e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (IllegalStateException e) {
+            // 최대 프로젝트 수 초과 예외 처리
+            log.error("최대 프로젝트 수 초과: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        } catch (Exception e) {
+            // 기타 예외 처리
+            log.error("예기치 않은 오류 발생: " + e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("팀 생성 중 오류가 발생했습니다. 다시 시도해주세요.");
+        }
     }
+
 
     //초대 번호 생성
     private String generateSerialNumber() {
@@ -111,7 +142,13 @@ public class TeamSpaceController {
             // 성공 응답
             return ResponseEntity.ok(teamSpace);
 
+        } catch (IllegalStateException e) {
+            // 최대 협업 인원 초과 예외 처리
+            log.error("Max collaborators limit exceeded", e);
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", e.getMessage(), "serialnumber", serialNumber));
         } catch (Exception e) {
+            // 기타 예외 처리
             log.error("Error joining team room", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "An unexpected error occurred", "details", e.getMessage()));

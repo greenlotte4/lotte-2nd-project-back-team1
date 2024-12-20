@@ -1,8 +1,10 @@
 package com.BackEndTeam1.service;
 
 import com.BackEndTeam1.entity.TeamSpace;
+import com.BackEndTeam1.entity.User;
 import com.BackEndTeam1.repository.TeamSpaceMemberRepository;
 import com.BackEndTeam1.repository.TeamSpaceRepository;
+import com.BackEndTeam1.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -17,6 +19,7 @@ import java.util.List;
 public class TeamSpaceService {
     private final TeamSpaceRepository teamSpaceRepository;
     private final TeamSpaceMemberRepository teamSpaceMemberRepository;
+    private final UserRepository userRepository;
     public boolean serialNumberExists(String serialNumber) {
         return teamSpaceRepository.existsBySerialnumber(serialNumber);
     }
@@ -27,6 +30,17 @@ public class TeamSpaceService {
     }
     //방생성
     public void save(TeamSpace teamSpace) {
+        User user = userRepository.findByUserId(teamSpace.getUser().getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 사용자 ID입니다."));
+        log.info("user : " + user);
+        String userId  = user.getUserId();
+        int MaxProject = user.getPlan().getMaxProject();
+        log.info("MaxProject : " + MaxProject);
+        int currentProjectCount = teamSpaceRepository.countByUser_UserId(userId);
+        log.info("currentProjectCount : " + currentProjectCount);
+        if (currentProjectCount == MaxProject) {
+            throw new IllegalStateException("사용자의 최대 프로젝트 수를 초과할 수 없습니다.");
+        }
         teamSpaceRepository.save(teamSpace);
     }
 

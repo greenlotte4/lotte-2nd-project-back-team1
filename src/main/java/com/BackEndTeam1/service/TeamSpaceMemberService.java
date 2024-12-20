@@ -8,6 +8,8 @@ import com.BackEndTeam1.entity.TeamSpace;
 import com.BackEndTeam1.entity.TeamSpaceMember;
 import com.BackEndTeam1.entity.User;
 import com.BackEndTeam1.repository.TeamSpaceMemberRepository;
+import com.BackEndTeam1.repository.TeamSpaceRepository;
+import com.BackEndTeam1.repository.UserRepository;
 import com.BackEndTeam1.repository.mongo.UserLoginRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -25,6 +27,8 @@ import java.util.stream.Collectors;
 public class TeamSpaceMemberService {
     private final TeamSpaceMemberRepository teamSpaceMemberRepository;
     private final UserLoginRepository userLoginRepository;
+    private final UserRepository userRepository;
+    private final TeamSpaceRepository teamSpaceRepository;
     public void membersave(TeamSpaceMember teamSpaceMember) {
         teamSpaceMemberRepository.save(teamSpaceMember);
     }
@@ -50,7 +54,18 @@ public class TeamSpaceMemberService {
         if (exists) {
             return false; // 이미 존재
         }
+        TeamSpace teamSpace = teamSpaceRepository.findById(teamspaceId)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 팀 스페이스 ID입니다."));
+        String serialNumber = teamSpace.getSerialnumber();
+        User owner = teamSpace.getUser(); // 방장 사용자
+        int maxCollaborators = owner.getPlan().getMaxCollaborators();
+        // 현재 팀스페이스의 멤버 수 확인
+        int currentMembers = teamSpaceMemberRepository.countByTeamSpace_TeamSpaceId(teamspaceId);
 
+        // 최대 인원 초과 여부 확인
+        if (currentMembers >= maxCollaborators) {
+            throw new IllegalStateException("최대 협업 인원 수를 초과했습니다. 추가 멤버를 초대할 수 없습니다.");
+        }
         // 새 멤버 저장
         TeamSpaceMember member = TeamSpaceMember.builder()
                 .teamSpace(TeamSpace.builder().teamSpaceId(teamspaceId).build())
@@ -96,8 +111,10 @@ public class TeamSpaceMemberService {
 
         // 5. 팀스페이스별로 그룹
         Map<TeamSpace, List<TeamSpaceMember>> teamToMembersMap = allMembersInMyTeamSpaces.stream()
-                .filter(tsm -> !tsm.getUser().getUserId().equals(userId)) // 나 자신 제외
-                .collect(Collectors.groupingBy(TeamSpaceMember::getTeamSpace));
+                .collect(Collectors.groupingBy(
+                        TeamSpaceMember::getTeamSpace,
+                        Collectors.filtering(tsm -> !tsm.getUser().getUserId().equals(userId), Collectors.toList())
+                ));
 
         // 6. Map을 DTO 형태로 변환
         return teamToMembersMap.entrySet().stream()
@@ -108,11 +125,15 @@ public class TeamSpaceMemberService {
                             .map(user -> new UserDTO(
                                     user.getUserId(),
                                     user.getUsername(),
-                                    userStatusMap.getOrDefault(user.getUserId(), "offline") // 상태 추가
+                                    userStatusMap.getOrDefault(user.getUserId(), "offline")
                             ))
                             .toList();
 
-                    return new TeamSpaceUsersDto(teamSpace.getTeamSpaceId(), teamSpace.getRoomname(), userDtos);
+                    return new TeamSpaceUsersDto(
+                            teamSpace.getTeamSpaceId(),
+                            teamSpace.getRoomname(),
+                            userDtos // 멤버가 없으면 빈 리스트로 전달
+                    );
                 })
                 .toList();
     }

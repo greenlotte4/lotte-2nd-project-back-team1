@@ -113,6 +113,7 @@ public class UserController {
                     .map(TeamSpace::getTeamSpaceId) // roomname 추출
                     .collect(Collectors.toList()); // roomname 리스트 생성
             userLoginService.updateUserStatus(user.getUserId(), "online", roomNames,teamid, user.getProfile(), user.getUsername());
+            userService.loginStatusChange(user.getUserId(), "online");
             String profile = userService.findProfileUrl(user.getUserId());
             // 리프레쉬 토큰 DB저장
             driveService.initializeDrivesForUser();

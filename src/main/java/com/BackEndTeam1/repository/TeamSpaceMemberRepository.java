@@ -23,4 +23,8 @@ public interface TeamSpaceMemberRepository extends JpaRepository<TeamSpaceMember
     List<TeamSpaceMember> findByTeamSpace_TeamSpaceIdIn(List<Long> teamSpaceIds);
 
     List<TeamSpaceMember> findByUser_UserId(String userId);
+
+    TeamSpaceMember findByTeamSpace_TeamSpaceId(Long teamspaceId);
+
+    int countByTeamSpace_TeamSpaceId(Long teamspaceId);
 }

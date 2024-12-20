@@ -12,4 +12,5 @@ public interface TeamSpaceRepository extends JpaRepository<TeamSpace, Long> {
     Optional<Object> findByUser_UserIdAndRoomname(String userId, String roomname);
 
     Optional<Object> findBySerialnumber(String serialNumber);
+    int countByUser_UserId(String userId);
 }
