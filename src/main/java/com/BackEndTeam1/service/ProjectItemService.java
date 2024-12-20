@@ -54,4 +54,25 @@ public class ProjectItemService {
     public List<ProjectItem> findByProjectId(Long id) {
         return projectItemRepository.findByProject_ProjectId(id);
     }
+
+    public ProjectItem updateGroupPosition(Long groupId, Integer newPosition) {
+        ProjectItem group = projectItemRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group ID를 찾을 수 없습니다: " + groupId));
+
+        List<ProjectItem> groups = projectItemRepository.findByProjectId(group.getProject().getProjectId());
+
+        // 현재 그룹의 위치 업데이트
+        groups.remove(group); // 해당 그룹을 목록에서 제거
+        groups.add(newPosition, group); // 새로운 위치에 삽입
+
+        // 모든 그룹의 위치를 업데이트
+        for (int i = 0; i < groups.size(); i++) {
+            ProjectItem currentGroup = groups.get(i);
+            currentGroup.setPosition(i);
+            projectItemRepository.save(currentGroup);
+        }
+
+        return group;
+    }
+
 }

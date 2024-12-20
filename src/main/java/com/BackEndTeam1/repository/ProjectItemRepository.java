@@ -24,4 +24,7 @@ public interface ProjectItemRepository extends JpaRepository<ProjectItem, Long> 
     List<ProjectItem> findByProject_ProjectId(Long projectId);
 
     List<ProjectItem> findByProject(Project project);
+
+    @Query("SELECT p FROM ProjectItem p WHERE p.project.projectId = :projectId ORDER BY p.position ASC")
+    List<ProjectItem> findByProjectId(@Param("projectId") Long projectId);
 }
