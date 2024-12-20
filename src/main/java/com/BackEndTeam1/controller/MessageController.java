@@ -30,6 +30,7 @@ public class MessageController {
     private final ChatTextService chatTextService;
     private final UserService userService;
 
+
     private final CustomFileUtil customFileUtil;
 
     private final FileService fileService;
@@ -74,6 +75,39 @@ public class MessageController {
         List<ChatRoomDTO> chatRoomList = messageService.findByChatId(chatId);
         log.info("getRoom 호출되었음" + chatRoomList);
         return ResponseEntity.status(HttpStatus.OK).body(chatRoomList);
+    }
+
+    @DeleteMapping("/room")
+    public ResponseEntity<?> deleteRoom(@RequestParam int chatRoomId) {
+        ChatRoomDTO chatRoomDTO = messageService.findChatRoomById(chatRoomId);
+
+        if(chatRoomDTO.getChat().getDtype().equals("DM"))
+        {
+            try {
+                boolean isLeft = messageService.deleteChat(chatRoomDTO.getChat().getChatId());
+                if (isLeft) {
+                    return ResponseEntity.ok("채팅방에서 성공적으로 나갔습니다.");
+                } else {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("채팅방 나가기에 실패했습니다.");
+                }
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류 발생");
+            }
+
+        }else{
+
+            try {
+                boolean isLeft = messageService.leaveChatRoom(chatRoomId);
+                if (isLeft) {
+                    return ResponseEntity.ok("채팅방에서 성공적으로 나갔습니다.");
+                } else {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("채팅방 나가기에 실패했습니다.");
+                }
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류 발생");
+            }
+        }
+
     }
 
     @GetMapping("/chat")
