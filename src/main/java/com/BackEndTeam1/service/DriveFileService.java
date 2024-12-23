@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -70,8 +71,6 @@ public class DriveFileService {
     }
 
     public List<Folder> getUserFoldersWithFiles(String userId, Integer driveId) {
-        Drive drive = driveRepository.findById(driveId)
-                .orElseThrow(() -> new RuntimeException("드라이브를 찾을 수 없습니다."));
 
         List<Folder> folders;
 
@@ -86,7 +85,14 @@ public class DriveFileService {
         // 각 폴더에 해당하는 파일 리스트를 추가
         for (Folder folder : folders) {
             List<DriveFile> files = driveFileRepository.findByFolder_FolderId(folder.getFolderId());
-            folder.setDriveFiles(files);
+            log.info("폴더 ID: " + folder.getFolderId() + "에 해당하는 파일 리스트: " + files);
+
+            // 파일이 없으면 빈 리스트 설정
+            if (files == null || files.isEmpty()) {
+                folder.setDriveFiles(Collections.emptyList());
+            } else {
+                folder.setDriveFiles(files);
+            }
         }
 
         return folders;

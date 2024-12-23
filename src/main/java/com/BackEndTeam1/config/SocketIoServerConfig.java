@@ -2,12 +2,16 @@ package com.BackEndTeam1.config;
 
 import com.corundumstudio.socketio.Configuration;
 import com.corundumstudio.socketio.SocketIOServer;
-import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.context.annotation.Bean;
 
+@org.springframework.context.annotation.Configuration
 public class SocketIoServerConfig {
-    //todo 나중에 설정
-    public void socketIOServer() {
 
+    @Bean
+    public SocketIOServer socketIOServer() {
+        Configuration config = new Configuration();
+        config.setHostname("localhost");
+        config.setPort(8081);  // 필요한 포트로 변경
+        return new SocketIOServer(config);
     }
 }
