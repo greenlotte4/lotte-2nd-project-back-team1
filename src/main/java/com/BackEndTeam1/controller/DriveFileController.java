@@ -40,21 +40,25 @@ public class DriveFileController {
 
     // 파일 업로드
     @PostMapping("/upload")
-    public String uploadFile(
-            @RequestParam("files") MultipartFile[] file,  // 여러 파일을 받을 때
-            @RequestParam("folderId") Integer folderId,      // 폴더 ID
-            @RequestParam("driveId") Integer driveId,        // 드라이브 ID
-            @RequestParam("userId") String userId           // 사용자 ID
+    public ResponseEntity<Object> uploadFile(
+            @RequestParam("files") MultipartFile[] files,  // 여러 파일을 받을 때
+            @RequestParam("folderId") Integer folderId,    // 폴더 ID
+            @RequestParam("driveId") Integer driveId,      // 드라이브 ID
+            @RequestParam("userId") String userId          // 사용자 ID
     ) {
         try {
+            if (folderId == 0) {
+                folderId = null;  // 최상위 폴더를 의미하도록 null을 그대로 유지
+            }
             // 파일 업로드 처리 및 데이터베이스 저장
-            List<String> fileUrl = fileService.uploadFiles(userId, folderId, driveId, file);
+            List<String> fileUrls = fileService.uploadFiles(userId, folderId, driveId, files);
 
-            // 업로드 성공 메시지 반환
-            return "파일 업로드 성공: " + fileUrl;
+            // 파일 URL 리스트를 JSON 형식으로 반환
+            return ResponseEntity.ok(fileUrls);  // 성공적으로 파일 URL들을 반환
         } catch (IOException e) {
             e.printStackTrace();
-            return "파일 업로드 실패: " + e.getMessage();
+            // 파일 업로드 실패시 에러 메시지 반환
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("파일 업로드 실패: " + e.getMessage());
         }
     }
 
@@ -86,6 +90,7 @@ public class DriveFileController {
         List<DriveFile> files = driveFileService.getAllFiles();
         return ResponseEntity.ok(files);
     }
+
     @PostMapping("/select/driveData")
     public ResponseEntity<List<Folder>> selectDriveUser(
             @RequestParam("driveId") Integer driveId,
@@ -94,9 +99,13 @@ public class DriveFileController {
         try {
             // 드라이브 및 폴더, 파일 목록 가져오기
             List<Folder> folders = driveFileService.getUserFoldersWithFiles(userId, driveId);
+            log.info("파일 목록 가져오기 결과: {}", folders);
+
             return ResponseEntity.status(HttpStatus.OK).body(folders);
         } catch (RuntimeException e) {
             // 예외 처리 (드라이브를 찾을 수 없는 경우)
+            log.info("파일 목록 가져오기 실패: ", e);
+
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
     }

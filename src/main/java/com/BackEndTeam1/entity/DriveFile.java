@@ -1,6 +1,7 @@
 package com.BackEndTeam1.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,6 +26,7 @@ public class DriveFile {
 
     @ManyToOne
     @JoinColumn(name = "folder_id")
+    @JsonIgnore
     private Folder folder;
 
     @ManyToOne

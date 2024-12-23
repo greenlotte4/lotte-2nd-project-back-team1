@@ -75,17 +75,28 @@ public class FileService {
 
         // 여러 파일을 처리하기 위해 반복문 사용
         for (MultipartFile file : files) {
+            // 파일 크기 제한 (예: 10MB)
+            if (file.getSize() > 10 * 1024 * 1024) { // 10MB
+                throw new RuntimeException("파일 크기가 너무 큽니다.");
+            }
+
+            // 파일 형식 제한 (예: 이미지 파일만 허용)
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image")) {
+                throw new RuntimeException("허용되지 않는 파일 형식입니다.");
+            }
+
             // 파일 이름을 고유하게 생성
             String fileName = UUID.randomUUID().toString() + "-" + file.getOriginalFilename();
 
-            // 파일 저장 위치 설정
+            // 파일 저장 위치 설정 (uploadDir은 환경 설정에서 동적으로 설정하거나, 서버 경로를 사용)
             Path targetLocation = Paths.get(uploadDir, fileName);
 
             // 파일을 지정된 위치에 저장
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
             // 파일의 다운로드 URL 생성
-            String baseUrl = "https://hubflow.store/user/thumb/";
+            String baseUrl = "https://hubflow.store/user/thumb/";  // 서버의 기본 URL로 변경 필요
             String fileUrl = baseUrl + fileName;
 
             // DriveFile 객체 생성
@@ -111,6 +122,7 @@ public class FileService {
         // 업로드된 파일들의 URL 리스트 반환
         return uploadedFileUrls;
     }
+
 
     public String uploadMessageImage(MultipartFile file) throws IOException {
 // 파일명 생성 (UUID를 사용하여 고유한 파일 이름을 생성)

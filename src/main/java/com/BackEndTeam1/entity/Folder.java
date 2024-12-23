@@ -45,7 +45,7 @@ public class Folder {
 
     private boolean isShared;
 
-    @OneToMany(mappedBy = "folder")
+    @OneToMany(mappedBy = "folder", fetch = FetchType.EAGER)
     private List<DriveFile> driveFiles; // 해당 폴더에 속한 파일들
 
     @Builder.Default
