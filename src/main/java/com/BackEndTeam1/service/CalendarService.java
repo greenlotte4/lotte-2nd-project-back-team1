@@ -2,6 +2,7 @@ package com.BackEndTeam1.service;
 
 import com.BackEndTeam1.dto.CalendarDTO;
 import com.BackEndTeam1.dto.CalendarEventDTO;
+import com.BackEndTeam1.dto.UserDTO;
 import com.BackEndTeam1.entity.*;
 import com.BackEndTeam1.repository.CalendarEventRepository;
 import com.BackEndTeam1.repository.CalendarRepository;
@@ -107,7 +108,13 @@ public class CalendarService {
                     // 캘린더 DTO 생성
                     CalendarDTO calendarDTO = CalendarDTO.builder()
                             .calendarId(calendar.getCalendarId())
-                            .user(calendar.getUser()) // User 객체 포함
+                            .user(UserDTO.builder()
+                                    .userId(calendar.getUser().getUserId())
+                                    .username(calendar.getUser().getUsername())
+                                    .email(calendar.getUser().getEmail())
+                                    .profile(calendar.getUser().getProfile())
+                                    .statusMessage(calendar.getUser().getStatusMessage())
+                                    .build())
                             .name(calendar.getName())
                             .isTeam(calendar.getIsTeam())
                             .createdAt(calendar.getCreatedAt())
