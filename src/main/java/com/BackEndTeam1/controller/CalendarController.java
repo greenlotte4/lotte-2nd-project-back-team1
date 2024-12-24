@@ -58,6 +58,7 @@ public class CalendarController {
     public ResponseEntity<List<CalendarDTO>> getCalendarsByUser(@RequestBody Map<String, String> request) {
         String userId = request.get("userId");
         List<CalendarDTO> calendars = calendarService.getCalendarsByUserId(userId);
+        log.info("calendars.toString())"+calendars.toString());
         return ResponseEntity.ok(calendars);
     }
     //달력 삭제
