@@ -100,15 +100,41 @@ public class CalendarService {
         return calendarUsers.stream()
                 .map(calendarUser -> {
                     Calendar calendar = calendarUser.getCalendar();
+
+                    // 이벤트 조회
                     List<CalendarEvent> events = calendarEventRepository.findByCalendar(calendar);
 
                     // 캘린더 DTO 생성
-                    CalendarDTO calendarDTO = modelMapper.map(calendar, CalendarDTO.class);
+                    CalendarDTO calendarDTO = CalendarDTO.builder()
+                            .calendarId(calendar.getCalendarId())
+                            .user(calendar.getUser()) // User 객체 포함
+                            .name(calendar.getName())
+                            .isTeam(calendar.getIsTeam())
+                            .createdAt(calendar.getCreatedAt())
+                            .updatedAt(calendar.getUpdatedAt())
+                            .calendarCode(calendar.getCalendarCode())
+                            .build();
 
-                    // 이벤트 리스트 추가
+                    // 이벤트 DTO 리스트 생성
                     List<CalendarEventDTO> eventDTOs = events.stream()
-                            .map(event -> modelMapper.map(event, CalendarEventDTO.class))
+                            .map(event -> CalendarEventDTO.builder()
+                                    .calendarEventId(event.getCalendarEventId())
+                                    .calendar(null) // 순환 참조 방지를 위해 null로 설정
+                                    .calendarId(event.getCalendar().getCalendarId())
+                                    .assignee(event.getAssignee())
+                                    .assigneeId(event.getAssignee() != null ? event.getAssignee().getUserId() : null)
+                                    .name(event.getName())
+                                    .content(event.getContent())
+                                    .startDate(event.getStartDate())
+                                    .endDate(event.getEndDate())
+                                    .notification(event.getNotification())
+                                    .allDay(event.getAllDay())
+                                    .createdAt(event.getCreatedAt())
+                                    .updatedAt(event.getUpdatedAt())
+                                    .build())
                             .collect(Collectors.toList());
+
+                    // 이벤트 리스트를 캘린더 DTO에 추가
                     calendarDTO.setEvents(eventDTOs);
 
                     return calendarDTO;
