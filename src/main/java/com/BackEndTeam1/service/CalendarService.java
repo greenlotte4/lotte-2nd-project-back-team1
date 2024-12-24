@@ -121,7 +121,6 @@ public class CalendarService {
                                     .calendarEventId(event.getCalendarEventId())
                                     .calendar(null) // 순환 참조 방지를 위해 null로 설정
                                     .calendarId(event.getCalendar().getCalendarId())
-                                    .assignee(event.getAssignee())
                                     .assigneeId(event.getAssignee() != null ? event.getAssignee().getUserId() : null)
                                     .name(event.getName())
                                     .content(event.getContent())
